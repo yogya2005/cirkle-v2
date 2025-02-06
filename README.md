@@ -33,3 +33,4 @@ an all-encompassing platform with only the essential features to make learning y
 # AI-Disclosures Milestone 0:
 - [Nafeesa Leena AI-Disclosure Form](docs/ai-disclosures/P0_AI_Declaration_Nafeesa_Leena_301576890.pdf)
 - [Mudasser Mashal AI-Disclosure Form](docs/ai-disclosures/P0_AI_Declaration_Mudasser_Mashal_301562811.pdf)
+- [Julianna Morena AI-Disclosure Form](docs/ai-disclosures/P0_AI_Declaration_Julianna_Morena_301577023.pdf)
