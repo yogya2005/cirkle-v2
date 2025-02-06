@@ -21,5 +21,8 @@
 - 
 - 
 
+# Project Proposal:
+[Link to Project Proposal]()
+
 # AI-Disclosures Milestone 0:
 - [Nafeesa Leena AI-Disclosure Form](docs/ai-disclosures/P0_AI_Declaration_Nafeesa_Leena_301576890.pdf)
