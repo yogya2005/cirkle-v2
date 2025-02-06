@@ -10,16 +10,22 @@
 - Nafeesa Leena
 
 # Project Name:
-- 
+- Circke: Collaborative Learning Platform
 
 # Project Description:
-- 
+- Circle is a web application designed to enhance collaborative learning. 
+It does this by providing an integrated platform with tools for collaboration, 
+such as shared notes, file uploads, flashcards, and a group pomodoro timer with 
+leaderboards for your group. Many people either struggle to effectively collaborate 
+or use 2-3 different platforms to meet all their needs. Cirkle aims to address this problem, 
+an all-encompassing platform with only the essential features to make learning your
+ next course/skill a breeze. 
 
 # 4 APIs:
-- 
-- 
-- 
-- 
+1. Google Drive API (Main API)
+2. Notion API (Main API)
+3. Cohere NLP API (Backup API)
+4. AnkiConnect API (Backup API)
 
 # Project Proposal:
 [Link to Project Proposal]()
