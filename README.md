@@ -28,7 +28,7 @@ an all-encompassing platform with only the essential features to make learning y
 4. AnkiConnect API (Backup API)
 
 # Project Proposal:
-[Link to Project Proposal]()
+[Link to Project Proposal](docs/proposal/Proposal_Project_CMPT276.pdf)
 
 # AI-Disclosures Milestone 0:
 - [Nafeesa Leena AI-Disclosure Form](docs/ai-disclosures/P0_AI_Declaration_Nafeesa_Leena_301576890.pdf)
