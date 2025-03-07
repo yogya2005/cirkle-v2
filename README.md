@@ -44,3 +44,5 @@ an all-encompassing platform with only the essential features to make learning y
 - [Mudasser Mashal AI-Disclosure Form Video](docs/ai-disclosures/P1_Video_AI_Declaration_Mudasser_Mashal_301562811.pdf)
 - [Yogya Agrawal AI-Disclosure Form Report](docs/ai-disclosures/P1_Report_AI_Declaration_Yogya_Agrawal_301590908.pdf)
 - [Yogya Agrawal AI-Disclosure Form Video](docs/ai-disclosures/P1_Video_AI_Declaration_Yogya_Agrawal_301590908.pdf)
+- [Nafeesa Leena AI-Disclosure Form Report](docs/ai-disclosures/P1_Report_AI_Declaration_Nafeesa_Leena_301576890.pdf)
+- [Nafeesa Leena AI-Disclosure Form Video](docs/ai-disclosures/P1_Video_AI_Declaration_Nafeesa_Leena_301576890.pdf)
