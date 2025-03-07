@@ -23,12 +23,15 @@ an all-encompassing platform with only the essential features to make learning y
 
 # 4 APIs:
 1. Google Drive API (Main API)
-2. Notion API (Main API)
+2. Google Docs API (Main API)
 3. Cohere NLP API (Backup API)
 4. AnkiConnect API (Backup API)
 
 # Project Proposal:
 [Link to Project Proposal](docs/proposal/Proposal_Project_CMPT276.pdf)
+
+# Planning Report:
+[Link to Planning Report](docs/reports/CMPT-276-M1-Report.pdf)
 
 # AI-Disclosures Milestone 0:
 - [Nafeesa Leena AI-Disclosure Form](docs/ai-disclosures/P0_AI_Declaration_Nafeesa_Leena_301576890.pdf)
