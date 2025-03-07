@@ -35,3 +35,8 @@ an all-encompassing platform with only the essential features to make learning y
 - [Mudasser Mashal AI-Disclosure Form](docs/ai-disclosures/P0_AI_Declaration_Mudasser_Mashal_301562811.pdf)
 - [Julianna Morena AI-Disclosure Form](docs/ai-disclosures/P0_AI_Declaration_Julianna_Morena_301577023.pdf)
 - [Yogya Agrawal AI-Disclosure Form](docs/ai-disclosures/P0_AI_Declaration_Yogya_Agrawal_301590908.pdf)
+
+- # AI-Disclosures Milestone 1:
+- [Mudasser Mashal AI-Disclosure Form Report](docs/ai-disclosures/P1_Report_AI_Declaration_Mudasser_Mashal_301562811.pdf)
+- [Mudasser Mashal AI-Disclosure Form Video](docs/ai-disclosures/P1_Video_AI_Declaration_Mudasser_Mashal_301562811.pdf)
+
