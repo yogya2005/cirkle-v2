@@ -1,4 +1,4 @@
-name: React CI/CD with Google APIs
+name: React CI/CD Pipeline
 
 on:
   push:
@@ -10,64 +10,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ✅ Step 1: Checkout Repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # ✅ Step 2: Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
           cache: 'npm'
 
-      # ✅ Step 3: Inject Google API Secrets (Optional, for env variables)
-      # - name: Inject Google API Secrets
-      #   run: |
-          #echo "REACT_APP_GOOGLE_API_KEY=${{ secrets.REACT_APP_GOOGLE_API_KEY }}" >> $GITHUB_ENV
-          #echo "REACT_APP_GOOGLE_CLIENT_ID=${{ secrets.REACT_APP_GOOGLE_CLIENT_ID }}" >> $GITHUB_ENV
-
-      # ✅ Step 4: Install Dependencies
       - name: Install dependencies
         run: npm install
 
-      # ✅ Step 5: Run ESLint for Code Quality
-      - name: Run ESLint
-        run: npm run lint
-
-      # ✅ Step 6: Run Tests
-      - name: Run Tests
+      - name: Run tests
         run: npm test
 
-      # ✅ Step 7: Build React App
-      - name: Build React App
+      - name: Build project
         run: npm run build
 
-      # 🔹 Deploy to GitHub Pages (Uncomment if using GitHub Pages)
-      # - name: Deploy to GitHub Pages
-      #   if: success()
-      #   uses: peaceiris/actions-gh-pages@v3
-      #   with:
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}
-      #     publish_dir: ./build
-
-      # 🔹 Deploy to Vercel (Uncomment if using Vercel)
-      # - name: Deploy to Vercel
-      #   if: success()
-      #   run: npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-      # 🔹 Deploy to Netlify (Uncomment if using Netlify)
-      # - name: Deploy to Netlify
-      #   if: success()
-      #   uses: nwtgck/actions-netlify@v2
-      #   with:
-      #     publish-dir: './build'
-      #     production-branch: main
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
-      #     netlify-auth-token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-
-      # 🔹 Deploy to Firebase Hosting (Uncomment if using Firebase)
-      # - name: Deploy to Firebase
-      #   if: success()
-      #   run: firebase deploy --token=${{ secrets.FIREBASE_TOKEN }}
 
