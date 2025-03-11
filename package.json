@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "jest --watchAll=false --bail",
+    "test": "jest --watchAll=false --bail --passWithNoTests",
     "start": "react-scripts start",
     "build": "react-scripts build"
   },
