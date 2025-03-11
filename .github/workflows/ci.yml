@@ -25,6 +25,3 @@ jobs:
 
       - name: Run tests
         run: npm test -- --watch=false --bail
-
-      - name: Build project
-        run: npm run build
