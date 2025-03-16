@@ -19,6 +19,9 @@ const config: Config = {
       },
     },
     extend: {
+      backgroundImage: {
+       "custom-bg": "url('/cirkle-app/public/background_iamge.png')",
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

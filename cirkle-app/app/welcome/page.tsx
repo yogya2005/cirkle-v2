@@ -1,54 +1,55 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { CircleIcon, FileTextIcon, TimerIcon } from "lucide-react"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { LogOutIcon, TimerIcon, PlusIcon, SunIcon, RocketIcon } from "lucide-react";
 
 export default function Welcome() {
   return (
-    <main className="min-h-screen bg-cream flex flex-col items-center justify-center p-4">
-      <div className="max-w-md w-full bg-cream rounded-lg p-8 border border-tan/20">
-        <div className="flex flex-col items-start space-y-6">
-          <h1 className="text-2xl font-bold text-[#3b2f2f]">Welcome, Yogya!</h1>
+    <main className="min-h-screen bg-[#FAF3E9] flex flex-col items-center p-8">
+      {/* Sign Out & Pomodoro Button */}
+      <div className="w-full flex justify-end items-center gap-4 max-w-5xl">
+        <Link href="/logout" className="flex items-center text-black font-medium text-lg">
+          <LogOutIcon className="h-5 w-5 mr-2" />
+          Sign Out
+        </Link>
 
-          <div className="w-full">
-            <h2 className="text-lg font-medium text-[#3b2f2f] mb-3">Your Cirkles</h2>
+        <Link href="/pomodoro">
+          <Button className="flex items-center gap-2 bg-[#924747] hover:bg-[#924747]/90 text-white rounded-full px-6 py-3 text-lg font-medium">
+            <TimerIcon className="h-5 w-5" />
+            Start a Pomodoro
+          </Button>
+        </Link>
+      </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              <Link href="/cmpt276">
-                <Button className="w-full h-16 flex flex-col items-center justify-center bg-[#924747] hover:bg-[#924747]/90 text-white rounded-md">
-                  <FileTextIcon className="h-5 w-5 mb-1" />
-                  <span className="text-xs">CMPT 276</span>
-                </Button>
-              </Link>
+      {/* Welcome Heading */}
+      <div className="text-center mt-8">
+        <h1 className="text-7xl font-bold text-[#3B2F2F]">Welcome, Yogya!</h1>
+        <div className="flex justify-center">
+          <div className="w-full max-w-5xl h-[3px] bg-[#3B2F2F] mt-4"></div>
+        </div>
+      </div>
 
-              <Link href="/pomodoro">
-                <Button className="w-full h-16 flex flex-col items-center justify-center bg-[#924747] hover:bg-[#924747]/90 text-white rounded-md">
-                  <TimerIcon className="h-5 w-5 mb-1" />
-                  <span className="text-xs">Pomodoro</span>
-                </Button>
-              </Link>
+      {/* Your Cirkles Section */}
+      <div className="max-w-5xl w-full mt-10">
+        <h2 className="text-5xl font-bold text-[#B78D75]">Your Cirkles</h2>
 
-              <Link href="/circle">
-                <Button className="w-full h-16 flex flex-col items-center justify-center bg-[#924747] hover:bg-[#924747]/90 text-white rounded-md">
-                  <CircleIcon className="h-5 w-5 mb-1" />
-                  <span className="text-xs">Circle</span>
-                </Button>
-              </Link>
-            </div>
-          </div>
+        <div className="flex gap-6 mt-6">
+          {/* CMPT 276 */}
+          <Link href="/cmpt276">
+            <Button className="w-[240px] h-[140px] flex flex-col items-center justify-center bg-[#924747] hover:bg-[#924747]/90 text-white rounded-xl shadow-md">
+            <img src="/sun.png" alt="Sun Icon" className="h-8 w-8" />
+              <span className="text-lg font-semibold">CMPT 276</span>
+            </Button>
+          </Link>
 
-          <div className="w-full pt-4">
-            <Link href="/create-circle">
-              <Button
-                variant="outline"
-                className="w-full border-[#3b2f2f] text-[#3b2f2f] bg-transparent hover:bg-[#3b2f2f]/10 rounded-md"
-              >
-                Create New Circle
-              </Button>
-            </Link>
-          </div>
+          {/* Add or Join */}
+          <Link href="/create-circle">
+            <Button className="w-[240px] h-[140px] flex flex-col items-center justify-center bg-[#924747] hover:bg-[#924747]/90 text-white rounded-xl shadow-md">
+            <img src="/plus.png" alt="Plus Icon" className="h-8 w-8" />
+              <span className="text-lg font-semibold">Add or Join</span>
+            </Button>
+          </Link>
         </div>
       </div>
     </main>
-  )
+  );
 }
-
