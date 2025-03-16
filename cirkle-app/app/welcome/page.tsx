@@ -11,7 +11,8 @@ export default function Welcome() {
     <main className="min-h-screen bg-[#FAF3E9] flex flex-col items-center p-8">
       {/* Sign Out & Pomodoro Button */}
       <div className="w-full flex justify-end items-center gap-4 max-w-5xl">
-        <Link href="/logout" className="flex items-center text-black font-medium text-lg">
+        {/* this link isn't working*/}
+        <Link href="/page" className="flex items-center text-black font-medium text-lg">
           <LogOutIcon className="h-5 w-5 mr-2" />
           Sign Out
         </Link>
