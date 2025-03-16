@@ -22,7 +22,7 @@ export default function Welcome() {
 
       {/* Welcome Heading */}
       <div className="text-center mt-8">
-        <h1 className="text-5xl font-bold text-[#3B2F2F]">Welcome, Yogya!</h1>
+        <h1 className="text-7xl font-bold text-[#3B2F2F]">Welcome, Yogya!</h1>
         <div className="flex justify-center">
           <div className="w-full max-w-5xl h-[3px] bg-[#3B2F2F] mt-4"></div>
         </div>
@@ -30,7 +30,7 @@ export default function Welcome() {
 
       {/* Your Cirkles Section */}
       <div className="max-w-5xl w-full mt-10">
-        <h2 className="text-3xl font-bold text-[#B78D75]">Your Cirkles</h2>
+        <h2 className="text-5xl font-bold text-[#B78D75]">Your Cirkles</h2>
 
         <div className="flex gap-6 mt-6">
           {/* CMPT 276 */}
