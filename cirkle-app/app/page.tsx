@@ -19,7 +19,7 @@ export default function Home() {
       {/* Google Login Button */}
       <div className="mt-12">
         <Button className="flex items-center space-x-3 bg-[#924747] hover:bg-[#924747]/90 text-white px-6 py-3 rounded-full text-xl">
-          <img src="/google.png" alt="Google Icon" className="text-2xl h-4 w-4"/>
+          <img src="/google.png" alt="Google Icon" className="text-2xl h-5 w-5"/>
           <span>Login with Google</span>
         </Button>
       </div>
