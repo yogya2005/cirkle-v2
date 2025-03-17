@@ -1,89 +1,91 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { FileTextIcon, UploadIcon, HomeIcon } from "lucide-react"
-import { useState } from "react"
+import Link from "next/link";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { HomeIcon, TimerIcon, PlusIcon, FileTextIcon, UploadIcon, ClipboardIcon } from "lucide-react";
 
 export default function CMPT276() {
-  const [activeTab, setActiveTab] = useState<"notes" | "files">("notes")
+  const [activeTab, setActiveTab] = useState<"notes" | "files">("notes");
 
   return (
-    <main className="min-h-screen bg-cream flex flex-col items-center justify-center p-4">
-      <div className="max-w-md w-full bg-cream rounded-lg p-8 border border-tan/20">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
-            <h1 className="text-2xl font-bold text-[#3b2f2f]">CMPT 276</h1>
-            <span className="ml-2 text-xs text-[#79747e]">WEEK 2</span>
-          </div>
-          <Link href="/welcome">
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <HomeIcon className="h-5 w-5 text-[#3b2f2f]" />
-            </Button>
+    <main className="min-h-screen bg-[#FAF3E9] flex flex-col items-center p-8">
+      {/* Top Navigation */}
+      <div className="w-full max-w-6xl flex justify-between items-center">
+        {/* Navigation Buttons */}
+        <div className="flex items-center space-x-6">
+          <Link href="/welcome" className="flex items-center space-x-2 text-black font-medium text-lg">
+            <HomeIcon className="h-5 w-5" />
+            <span>Home</span>
+          </Link>
+          <Link href="/pomodoro" className="flex items-center space-x-2 text-black font-medium text-lg">
+            <TimerIcon className="h-5 w-5" />
+            <span>Pomodoro</span>
           </Link>
         </div>
 
-        <div className="mb-6">
-          <h2 className="text-lg font-medium text-[#3b2f2f] mb-3">Notes</h2>
-
-          <div className="flex space-x-2 mb-3">
-            <Button
-              variant={activeTab === "notes" ? "default" : "outline"}
-              className={activeTab === "notes" ? "bg-[#924747] text-white" : "border-[#3b2f2f] text-[#3b2f2f]"}
-              onClick={() => setActiveTab("notes")}
+        {/* Overlapping User Avatars */}
+        <div className="flex -space-x-2">
+          {["A", "E", "C", "D", "F", "G"].map((letter, index) => (
+            <div
+              key={index}
+              className="w-8 h-8 flex items-center justify-center text-black font-bold rounded-full border border-white"
+              style={{
+                backgroundColor: index % 2 === 0 ? "#FFD1DC" : "#D0C3FF",
+              }}
             >
-              Notes
-            </Button>
-            <Button
-              variant={activeTab === "files" ? "default" : "outline"}
-              className={activeTab === "files" ? "bg-[#924747] text-white" : "border-[#3b2f2f] text-[#3b2f2f]"}
-              onClick={() => setActiveTab("files")}
-            >
-              Files
-            </Button>
-          </div>
-
-          {activeTab === "notes" && (
-            <div className="space-y-2">
-              <Button className="w-full justify-start bg-[#924747] hover:bg-[#924747]/90 text-white rounded-md">
-                <FileTextIcon className="h-4 w-4 mr-2" />
-                Lecture 1
-              </Button>
-              <Button className="w-full justify-start bg-[#3b2f2f] hover:bg-[#3b2f2f]/90 text-white rounded-md">
-                <FileTextIcon className="h-4 w-4 mr-2" />
-                Lecture 2
-              </Button>
+              {letter}
             </div>
-          )}
+          ))}
+        </div>
+      </div>
 
-          {activeTab === "files" && (
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium text-[#3b2f2f] mb-2">File Uploads</h3>
-              <Button className="w-full justify-start bg-[#924747] hover:bg-[#924747]/90 text-white rounded-md">
-                <UploadIcon className="h-4 w-4 mr-2" />
-                Upload File
-              </Button>
-              <Button className="w-full justify-start bg-[#3b2f2f] hover:bg-[#3b2f2f]/90 text-white rounded-md">
-                <UploadIcon className="h-4 w-4 mr-2" />
-                Import URL
-              </Button>
-            </div>
-          )}
+      {/* Course Title and Copyable ID */}
+      <div className="max-w-6xl w-full mt-8">
+        <div className="flex items-center">
+          <h1 className="text-6xl font-bold text-[#3B2F2F]">CMPT 276</h1>
+          <span className="ml-4 text-xl text-[#79747e] flex items-center">
+            #8215
+            <ClipboardIcon className="h-5 w-5 ml-2 cursor-pointer" />
+          </span>
+        </div>
+        <div className="w-full h-[3px] bg-[#3B2F2F] mt-4"></div>
+      </div>
+
+      {/* Notes & File Uploads Section */}
+      <div className="max-w-6xl w-full mt-10">
+        {/* Notes Section */}
+        <h2 className="text-3xl font-bold text-[#B78D75]">Notes</h2>
+        <div className="flex gap-6 mt-4">
+          <Button className="w-[200px] h-[100px] flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
+            <span className="text-lg font-semibold">CMPT 276</span>
+          </Button>
+
+          <Button className="w-[200px] h-[100px] flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
+            <span className="text-lg font-semibold">CMPT 383</span>
+          </Button>
+
+          <Button className="w-[200px] h-[100px] flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
+            <PlusIcon className="h-6 w-6" />
+          </Button>
         </div>
 
-        <div className="mt-6 p-4 bg-[#f3edf7] rounded-lg">
-          <div className="flex justify-between items-center">
-            <h3 className="text-sm font-medium text-[#3b2f2f]">Uses</h3>
-            <Button variant="ghost" size="sm" className="text-xs text-[#924747]">
-              Close
-            </Button>
-          </div>
-          <div className="mt-2">
-            <p className="text-sm text-[#3b2f2f]">Docs API</p>
-          </div>
+        {/* File Uploads Section */}
+        <h2 className="text-3xl font-bold text-[#B78D75] mt-10">File Uploads</h2>
+        <div className="flex gap-6 mt-4">
+          <Button className="w-[200px] h-[100px] flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
+            <span className="text-lg font-semibold">CMPT 276</span>
+          </Button>
+
+          <Button className="w-[200px] h-[100px] flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
+            <span className="text-lg font-semibold">CMPT 383</span>
+          </Button>
+
+          <Button className="w-[200px] h-[100px] flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
+            <PlusIcon className="h-6 w-6" />
+          </Button>
         </div>
       </div>
     </main>
-  )
+  );
 }
-
