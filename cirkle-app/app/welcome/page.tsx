@@ -29,7 +29,7 @@ export default function Welcome() {
       <div className="text-center mt-8">
         <h1 className="text-7xl font-bold text-[#3B2F2F]">Welcome, Yogya!</h1>
         <div className="flex justify-center">
-          <div className="w-full max-w-5xl h-[3px] bg-[#3B2F2F] mt-4"></div>
+        <div className="w-full h-[3px] bg-[#3B2F2F] mt-4"></div>
         </div>
       </div>
 
