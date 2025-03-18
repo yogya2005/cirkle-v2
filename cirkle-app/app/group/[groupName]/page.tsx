@@ -2,12 +2,12 @@
 
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { HomeIcon, PlusIcon, ClipboardIcon, CheckIcon } from "lucide-react";
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { HomeIcon, TimerIcon, PlusIcon, ClipboardIcon, CheckIcon } from "lucide-react";
 
 export default function GroupPage() {
-  const { groupName } = useParams(); // Get the dynamic group name from the URL
+  const { groupName } = useParams();
   const [copied, setCopied] = useState(false);
   const [groupCode, setGroupCode] = useState("");
 
@@ -27,10 +27,32 @@ export default function GroupPage() {
     <main className="min-h-screen bg-[#FAF3E9] flex flex-col items-center p-8">
       {/* Top Navigation */}
       <div className="w-full max-w-6xl flex justify-between items-center">
-        <Link href="/welcome" className="flex items-center space-x-2 text-black font-medium text-lg">
-          <HomeIcon className="h-5 w-5" />
-          <span>Home</span>
-        </Link>
+        {/* Navigation Buttons */}
+        <div className="flex items-center space-x-6">
+          <Link href="/welcome" className="flex items-center space-x-2 text-black font-medium text-lg">
+            <HomeIcon className="h-5 w-5" />
+            <span>Home</span>
+          </Link>
+          <Link href="/pomodoro" className="flex items-center space-x-2 text-black font-medium text-lg">
+            <TimerIcon className="h-5 w-5" />
+            <span>Pomodoro</span>
+          </Link>
+        </div>
+
+        {/* Overlapping User Avatars */}
+        <div className="flex -space-x-2">
+          {["A", "E", "C", "D", "F", "G"].map((letter, index) => (
+            <div
+              key={index}
+              className="w-8 h-8 flex items-center justify-center text-black font-bold rounded-full border border-white"
+              style={{
+                backgroundColor: index % 2 === 0 ? "#FFD1DC" : "#D0C3FF",
+              }}
+            >
+              {letter}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Group Title and Copyable Code */}
@@ -38,9 +60,13 @@ export default function GroupPage() {
         <div className="flex items-center">
           <h1 className="text-6xl font-bold text-[#3B2F2F]">{decodeURIComponent(groupName)}</h1>
           <span className="ml-4 text-xl text-[#79747e] flex items-center">
-            {`#${groupCode}`}
+            #{groupCode}
             <button onClick={copyToClipboard} className="ml-2">
-              {copied ? <CheckIcon className="h-5 w-5 text-green-500" /> : <ClipboardIcon className="h-5 w-5 cursor-pointer" />}
+              {copied ? (
+                <CheckIcon className="h-5 w-5 text-green-500" />
+              ) : (
+                <ClipboardIcon className="h-5 w-5 cursor-pointer" />
+              )}
             </button>
           </span>
         </div>
@@ -68,4 +94,3 @@ export default function GroupPage() {
     </main>
   );
 }
-
