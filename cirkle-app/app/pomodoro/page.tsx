@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { PauseIcon, PlayIcon, CheckIcon, HomeIcon } from "lucide-react";
 import Link from "next/link";
 
+type LeaderboardEntry = { name: string; points: number };
+type LeaderboardData = { [group: string]: LeaderboardEntry[] };
+
 export default function Pomodoro() {
   const [minutes, setMinutes] = useState(25);
   const [seconds, setSeconds] = useState(0);
@@ -14,9 +17,9 @@ export default function Pomodoro() {
   const [inputMinutes, setInputMinutes] = useState(25);
 
   const groups = ["CMPT 276", "CMPT 383"];
-  const [selectedGroup, setSelectedGroup] = useState(groups[0]);
+  const [selectedGroup, setSelectedGroup] = useState<string>(groups[0]);
 
-  const leaderboardData = {
+  const leaderboardData: LeaderboardData = {
     "CMPT 276": [
       { name: "Alice", points: 120 },
       { name: "Bob", points: 110 },
@@ -168,7 +171,7 @@ export default function Pomodoro() {
             {groups.map((group) => (
               <Button
                 key={group}
-                variant={selectedGroup === group ? "solid" : "outline"}
+                variant={selectedGroup === group ? "default" : "outline"}
                 className={`w-full ${
                   selectedGroup === group
                     ? "bg-[#3b2f2f] text-white"
@@ -185,7 +188,7 @@ export default function Pomodoro() {
           {/* Leaderboard */}
           <h2 className="text-xl font-bold text-[#3b2f2f] mb-4">Leaderboard</h2>
           <ul className="space-y-2">
-            {leaderboardData[selectedGroup].map((user, index) => (
+            {leaderboardData[selectedGroup].map((user: LeaderboardEntry, index: number) => (
               <li key={index} className="flex justify-between text-[#3b2f2f]">
                 <span>{user.name}</span>
                 <span>{user.points} pts</span>
