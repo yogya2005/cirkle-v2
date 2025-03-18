@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { HomeIcon, PauseIcon, PlayIcon } from "lucide-react";
+import { PauseIcon, PlayIcon, CheckIcon, HomeIcon } from "lucide-react";
+import Link from "next/link";
 
 export default function Pomodoro() {
   const [minutes, setMinutes] = useState(25);
@@ -12,6 +12,22 @@ export default function Pomodoro() {
   const [isOnBreak, setIsOnBreak] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [inputMinutes, setInputMinutes] = useState(25);
+
+  const groups = ["CMPT 276", "CMPT 383"];
+  const [selectedGroup, setSelectedGroup] = useState(groups[0]);
+
+  const leaderboardData = {
+    "CMPT 276": [
+      { name: "Alice", points: 120 },
+      { name: "Bob", points: 110 },
+      { name: "Charlie", points: 100 },
+    ],
+    "CMPT 383": [
+      { name: "Dave", points: 130 },
+      { name: "Eve", points: 125 },
+      { name: "Frank", points: 115 },
+    ],
+  };
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -40,10 +56,8 @@ export default function Pomodoro() {
   }, [isActive, minutes, seconds]);
 
   const toggleTimer = () => {
-    if (isOnBreak) {
-      setIsOnBreak(false);
-    }
-    setIsActive((prev) => !prev);
+    if (isOnBreak) setIsOnBreak(false);
+    setIsActive(!isActive);
   };
 
   const resetTimer = () => {
@@ -64,9 +78,7 @@ export default function Pomodoro() {
   };
 
   const handleMinutesClick = () => {
-    if (!isActive && !isOnBreak) {
-      setIsEditing(true);
-    }
+    if (!isActive && !isOnBreak) setIsEditing(true);
   };
 
   const handleMinutesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,19 +96,16 @@ export default function Pomodoro() {
 
   return (
     <main className="min-h-screen bg-cream flex flex-col items-center justify-center p-4">
-      <div className="max-w-md w-full bg-cream rounded-lg p-8 border border-tan/20">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-[#3b2f2f]">Pomodoro</h1>
-          <div className="flex space-x-2">
-            <Link href="/welcome">
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <HomeIcon className="h-5 w-5 text-[#3b2f2f]" />
-              </Button>
-            </Link>
-          </div>
-        </div>
+      <div className="max-w-5xl w-full bg-cream rounded-lg p-8 border border-tan/20 flex relative">
+        {/* Home Button */}
+        <Link href="/welcome">
+          <Button variant="ghost" size="icon" className="absolute top-4 left-4 rounded-full border border-[#3b2f2f]">
+            <HomeIcon className="h-5 w-5 text-[#3b2f2f]" />
+          </Button>
+        </Link>
 
-        <div className="flex flex-col items-center justify-center">
+        {/* Timer Section */}
+        <div className="flex-1 flex flex-col items-center justify-center">
           <div className="relative w-48 h-48 flex items-center justify-center border-4 border-[#924747] rounded-full mb-6">
             <div className="text-4xl font-bold text-[#924747]">
               {isEditing ? (
@@ -107,11 +116,11 @@ export default function Pomodoro() {
                   onBlur={handleMinutesBlur}
                   className="w-16 p-1 border rounded text-center"
                   min={1}
+                  autoFocus
                 />
               ) : (
                 <span onClick={handleMinutesClick} className="cursor-pointer">
-                  {String(minutes).padStart(2, "0")}:
-                  {String(seconds).padStart(2, "0")}
+                  {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
                 </span>
               )}
             </div>
@@ -130,9 +139,7 @@ export default function Pomodoro() {
           </div>
 
           {isOnBreak && (
-            <div className="text-red-500 mt-2">
-              On Break
-            </div>
+            <div className="text-red-500 mt-2">On Break</div>
           )}
 
           <div className="w-full flex flex-col space-y-2">
@@ -141,7 +148,7 @@ export default function Pomodoro() {
               className="w-full border-[#3b2f2f] text-[#3b2f2f] bg-transparent hover:bg-[#3b2f2f]/10 rounded-md"
               onClick={handleBreak}
             >
-              {isOnBreak ? 'Resume' : 'Break'}
+              {isOnBreak ? "Resume" : "Break"}
             </Button>
             <Button
               variant="outline"
@@ -151,6 +158,40 @@ export default function Pomodoro() {
               Reset Timer
             </Button>
           </div>
+        </div>
+
+        {/* Sidebar */}
+        <div className="w-1/3 ml-8">
+          {/* Group Selection */}
+          <h2 className="text-xl font-bold text-[#3b2f2f] mb-4">Groups</h2>
+          <div className="flex flex-col space-y-2 mb-8">
+            {groups.map((group) => (
+              <Button
+                key={group}
+                variant={selectedGroup === group ? "solid" : "outline"}
+                className={`w-full ${
+                  selectedGroup === group
+                    ? "bg-[#3b2f2f] text-white"
+                    : "border-[#3b2f2f] text-[#3b2f2f] bg-transparent hover:bg-[#3b2f2f]/10"
+                } rounded-md flex justify-between items-center`}
+                onClick={() => setSelectedGroup(group)}
+              >
+                {group}
+                {selectedGroup === group && <CheckIcon className="h-4 w-4 ml-2" />}
+              </Button>
+            ))}
+          </div>
+
+          {/* Leaderboard */}
+          <h2 className="text-xl font-bold text-[#3b2f2f] mb-4">Leaderboard</h2>
+          <ul className="space-y-2">
+            {leaderboardData[selectedGroup].map((user, index) => (
+              <li key={index} className="flex justify-between text-[#3b2f2f]">
+                <span>{user.name}</span>
+                <span>{user.points} pts</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </main>
