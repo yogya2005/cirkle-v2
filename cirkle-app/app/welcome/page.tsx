@@ -4,6 +4,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { LogOutIcon, TimerIcon, ArrowLeftIcon } from "lucide-react";
+// Import signOut from Firebase auth
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase"; // Make sure this path matches your actual Firebase setup file
 
 export default function Welcome() {
   const [modelOpen, setModelOpen] = useState(false);
@@ -38,14 +41,31 @@ export default function Welcome() {
     setGroupName("");
   };
 
+  // Function to handle sign out
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      console.log("User signed out successfully");
+      // Redirect to home page after sign out
+      router.push("/");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#FAF3E9] flex flex-col items-center p-8">
       {/* Sign Out & Pomodoro Button */}
       <div className="w-full flex justify-end items-center gap-4 max-w-5xl">
-        <Link href="/page" className="flex items-center text-black font-medium text-lg">
+        {/* Replace Link with Button for sign out */}
+        <Button 
+          onClick={handleSignOut} 
+          variant="ghost" 
+          className="flex items-center text-black font-medium text-lg"
+        >
           <LogOutIcon className="h-5 w-5 mr-2" />
           Sign Out
-        </Link>
+        </Button>
 
         <Link href="/pomodoro">
           <Button className="flex items-center gap-2 bg-[#924747] hover:bg-[#924747]/90 text-white rounded-full px-6 py-3 text-lg font-medium">
