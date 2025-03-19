@@ -5,19 +5,51 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { HomeIcon, TimerIcon, PlusIcon, ClipboardIcon, CheckIcon } from "lucide-react";
+import { getUserGroups } from "@/lib/firestore"; // Import the Firestore function
+import { auth } from "@/lib/firebase";
 
 export default function GroupPage() {
   const { groupName } = useParams();
   const [copied, setCopied] = useState(false);
-  const [groupCode, setGroupCode] = useState("");
+  const [groupId, setGroupId] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Generate a random 4-digit code when the page loads
-    setGroupCode(Math.floor(1000 + Math.random() * 9000).toString());
-  }, []);
+    // Fetch the real group ID from Firestore based on the group name
+    const fetchGroupId = async () => {
+      if (!auth.currentUser) return;
+      
+      try {
+        setLoading(true);
+        // Get all user groups
+        const userGroups = await getUserGroups(auth.currentUser.uid);
+        
+        // Find the one matching our group name param
+        const decodedGroupName = decodeURIComponent(groupName as string);
+        const group = userGroups.find(g => g.name === decodedGroupName);
+        
+        if (group) {
+          // Use the Firestore document ID as the group ID
+          setGroupId(group.id);
+        } else {
+          console.warn(`Group not found: ${decodedGroupName}`);
+          // Fallback: generate a random ID if group isn't found
+          setGroupId(Math.floor(1000 + Math.random() * 9000).toString());
+        }
+      } catch (error) {
+        console.error("Error fetching group ID:", error);
+        // Fallback: generate a random ID if there's an error
+        setGroupId(Math.floor(1000 + Math.random() * 9000).toString());
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGroupId();
+  }, [groupName]);
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(groupCode).then(() => {
+    navigator.clipboard.writeText(groupId).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -58,9 +90,9 @@ export default function GroupPage() {
       {/* Group Title and Copyable Code */}
       <div className="max-w-6xl w-full mt-8">
         <div className="flex items-center">
-          <h1 className="text-6xl font-bold text-[#3B2F2F]">{decodeURIComponent(groupName)}</h1>
+          <h1 className="text-6xl font-bold text-[#3B2F2F]">{decodeURIComponent(groupName as string)}</h1>
           <span className="ml-4 text-xl text-[#79747e] flex items-center">
-            #{groupCode}
+            {loading ? "Loading..." : groupId}
             <button onClick={copyToClipboard} className="ml-2">
               {copied ? (
                 <CheckIcon className="h-5 w-5 text-green-500" />

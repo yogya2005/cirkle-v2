@@ -1,27 +1,25 @@
 // lib/firebase.ts
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
-// Read the config from environment variables
+// Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBD2wZR7yaELlkfca9D-a746nkacRgXAoc",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "cirkle-376bf.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "cirkle-376bf",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "cirkle-376bf.appspot.com",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "1046629939214",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:1046629939214:web:b7540671448a709824245f"
 };
 
-// Debug - log partial API key to ensure it's loaded
-if (process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
-  const apiKeyPreview = process.env.NEXT_PUBLIC_FIREBASE_API_KEY.substring(0, 5) + '...';
-  console.log(`Firebase config loaded with API key: ${apiKeyPreview}`);
-} else {
-  console.warn('Firebase API key not found in environment variables');
-}
+// Initialize Firebase - ensure it's only initialized once
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Firebase
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+// Get Firebase services
 const auth = getAuth(app);
+const db = getFirestore(app);
 
-export { app, auth };
+console.log("Firebase initialized successfully with app:", app.name);
+
+export { app, auth, db };
