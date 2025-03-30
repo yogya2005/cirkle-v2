@@ -1,8 +1,10 @@
 // lib/firebase.ts
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
-// Read the config from environment variables
+// Firebase configuration from environment variables
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -12,7 +14,7 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-// Debug - log partial API key to ensure it's loaded
+// Debug - log partial API key to ensure it's loaded (remove in production)
 if (process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
   const apiKeyPreview = process.env.NEXT_PUBLIC_FIREBASE_API_KEY.substring(0, 5) + '...';
   console.log(`Firebase config loaded with API key: ${apiKeyPreview}`);
@@ -23,5 +25,13 @@ if (process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
 // Initialize Firebase
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+const googleProvider = new GoogleAuthProvider();
 
-export { app, auth };
+// Configure Google Auth provider
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+
+export { app, auth, db, storage, googleProvider };
