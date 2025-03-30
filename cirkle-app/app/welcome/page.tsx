@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { LogOutIcon, TimerIcon } from "lucide-react";
+import { LogOutIcon, TimerIcon, XIcon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useGroups } from "@/hooks/useGroups";
 import { createGroup, joinGroup, getGroupById, leaveGroup } from '@/services/groupService';
@@ -151,9 +151,9 @@ export default function Welcome() {
               </Link>
               <button
                 onClick={() => setConfirmLeaveGroupId(group.id!)}
-                className="absolute top-2 right-2 bg-white text-[#924747] px-2 py-1 text-sm rounded shadow hover:bg-gray-100"
+                  className="absolute top-2 right-2 text-[#924747] hover:text-red-600"
               >
-                Leave
+              <XIcon className="w-5 h-5" />
               </button>
             </div>
           ))}
