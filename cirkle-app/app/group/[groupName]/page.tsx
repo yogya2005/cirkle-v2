@@ -371,7 +371,9 @@ export default function GroupPage() {
                 className="block w-[200px] h-[100px]"
               >
                 <Button className="w-full h-full flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
-                  <span className="text-lg font-semibold">{doc.name}</span>
+                  <span className="text-lg font-semibold truncate text-ellipsis overflow-hidden whitespace-nowrap w-full text-center px-2">
+                    {doc.name}
+                  </span>
                 </Button>
               </a>
             ))}
@@ -398,8 +400,11 @@ export default function GroupPage() {
               className="block w-[200px] h-[100px]"
             >
               <Button className="w-full h-full flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
-                <span className="text-lg font-semibold">{file.name}</span>
-              </Button>
+                <span className="text-lg font-semibold truncate text-ellipsis overflow-hidden whitespace-nowrap w-full text-center px-2">
+                  {file.name}
+             </span>
+          </Button>
+
             </a>
           ))}
           

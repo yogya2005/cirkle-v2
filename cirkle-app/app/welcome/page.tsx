@@ -144,10 +144,13 @@ export default function Welcome() {
           {groups.map((group) => (
             <div key={group.id} className="relative">
               <Link href={`/group/${encodeURIComponent(group.name)}`}>
-                <Button className="w-[240px] h-[140px] flex flex-col items-center justify-center bg-[#924747] hover:bg-[#924747]/90 text-white rounded-xl shadow-md">
-                  <img src="/sun.png" alt="Sun Icon" className="h-8 w-8" />
-                  <span className="text-lg font-semibold">{group.name}</span>
-                </Button>
+              <Button className="w-[240px] h-[140px] flex flex-col items-center justify-center bg-[#924747] hover:bg-[#924747]/90 text-white rounded-xl shadow-md">
+                <img src="/sun.png" alt="Sun Icon" className="h-8 w-8" />
+                <span className="text-lg font-semibold truncate text-ellipsis overflow-hidden whitespace-nowrap w-full text-center px-2">
+                  {group.name}
+                </span>
+              </Button>
+
               </Link>
               <button
                 onClick={() => setConfirmLeaveGroupId(group.id!)}
