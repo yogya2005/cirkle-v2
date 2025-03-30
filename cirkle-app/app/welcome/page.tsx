@@ -262,18 +262,40 @@ export default function Welcome() {
         </div>
       )}
 
-      {/* Leave Group Confirmation Modal */}
-      {confirmLeaveGroupId && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Are you sure you want to leave this group?</h2>
-            <div className="flex gap-4 justify-end">
-              <Button onClick={() => setConfirmLeaveGroupId(null)} variant="outline">Cancel</Button>
-              <Button onClick={handleLeaveGroup} className="bg-[#924747] text-white hover:bg-[#924747]/90">Leave</Button>
+        {/* Leave Group Confirmation Modal */}
+        {confirmLeaveGroupId && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 animate-fade-in">
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-[360px] animate-scale-in">
+            <h2 className="text-2xl font-bold text-[#3B2F2F] text-center mb-6">Leave Group?</h2>
+            <p className="text-center text-gray-700 mb-6">Are you sure you want to leave this group? You will lose access to its resources.</p>
+            <div className="flex gap-4 justify-center">
+              <Button onClick={() => setConfirmLeaveGroupId(null)} variant="outline" className="rounded-full px-6 py-2 bg-black text-white hover:text-white hover:bg-stone-800">Cancel</Button>
+              <Button onClick={handleLeaveGroup} className="bg-[#924747] text-white hover:bg-[#924747]/90 rounded-full px-6 py-2">Leave</Button>
             </div>
           </div>
         </div>
       )}
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes scaleIn {
+          from { transform: scale(0.95); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+
+        .animate-fade-in {
+          animation: fadeIn 0.2s ease-out;
+        }
+
+        .animate-scale-in {
+          animation: scaleIn 0.2s ease-out;
+        }
+      `}</style>
+
 
     </main>
     </ProtectedRoute>
