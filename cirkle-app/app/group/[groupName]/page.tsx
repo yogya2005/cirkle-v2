@@ -12,6 +12,8 @@ import { createGroupDocument, uploadGroupFile } from "@/services/googleDriveServ
 import { requestGooglePermissions, hasValidGoogleToken, saveGoogleTokenData } from "@/services/googleAuthService";
 import { getUserGroups } from '@/services/groupService';
 import ProtectedRoute from "@/components/protected-route";
+import { getUserById } from '@/services/userService';
+import { Tooltip } from '@/components/ui/tooltip';
 
 export default function GroupPage() {
   const params = useParams();
@@ -27,9 +29,38 @@ export default function GroupPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isCreatingDoc, setIsCreatingDoc] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [memberData, setMemberData] = useState<{[key: string]: any}>({});
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
+
+  // Fetch member data when group loads
+  useEffect(() => {
+    const fetchMemberData = async () => {
+      if (!group || !group.members) return;
+      
+      const memberIds = Object.keys(group.members).filter(id => group.members[id]);
+      const userData: {[key: string]: any} = {};
+      
+      // Fetch data for each member
+      for (const id of memberIds) {
+        try {
+          const user = await getUserById(id);
+          if (user) {
+            userData[id] = user;
+          }
+        } catch (err) {
+          console.error(`Error fetching user data for ${id}:`, err);
+        }
+      }
+      
+      setMemberData(userData);
+    };
+    
+    if (group) {
+      fetchMemberData();
+    }
+  }, [group]);
 
   // Fetch group data when component mounts
   useEffect(() => {
@@ -226,7 +257,7 @@ export default function GroupPage() {
             <HomeIcon className="h-5 w-5" />
             <span>Home</span>
           </Link>
-          <Link href="/pomodoro" className="flex items-center space-x-2 text-black font-medium text-lg">
+          <Link href={`/pomodoro?groupId=${group.id}`} className="flex items-center space-x-2 text-black font-medium text-lg">
             <TimerIcon className="h-5 w-5" />
             <span>Pomodoro</span>
           </Link>
@@ -236,17 +267,27 @@ export default function GroupPage() {
         <div className="flex -space-x-2">
           {group && group.members && Object.keys(group.members)
             .filter(key => group.members[key])
-            .map((userId, index) => (
-              <div
-                key={userId}
-                className="w-8 h-8 flex items-center justify-center text-black font-bold rounded-full border border-white"
-                style={{
-                  backgroundColor: index % 2 === 0 ? "#FFD1DC" : "#D0C3FF",
-                }}
-              >
-                {userId.charAt(0).toUpperCase()}
-              </div>
-            ))}
+            .map((userId) => {
+              const userData = memberData[userId];
+              const firstLetter = userData?.displayName?.charAt(0).toUpperCase() || userId.charAt(0).toUpperCase();
+              const backgroundColor = userData ? (userId === user?.uid ? "#FFD1DC" : "#D0C3FF") : "#CCCCCC";
+              
+              return (
+                <div
+                  key={userId}
+                  className="w-8 h-8 flex items-center justify-center text-black font-bold rounded-full border border-white group relative"
+                  style={{ backgroundColor }}
+                >
+                  {firstLetter}
+                  
+                  {/* Tooltip that appears on hover */}
+                  <div className="absolute hidden group-hover:block top-full mt-2 p-2 bg-white shadow-md rounded z-10 text-xs min-w-[150px]">
+                    <p className="font-semibold">{userData?.displayName || 'Unknown User'}</p>
+                    <p className="text-gray-600">{userData?.email || ''}</p>
+                  </div>
+                </div>
+              );
+            })}
         </div>
       </div>
 
@@ -270,7 +311,7 @@ export default function GroupPage() {
           <h1 className="text-6xl font-bold text-[#3B2F2F]">{decodeURIComponent(groupName)}</h1>
           {group && (
             <span className="ml-4 text-xl text-[#79747e] flex items-center">
-              #{getGroupInviteCode(group.id).slice(0, 6)}
+              #{getGroupInviteCode(group.id)}
               <button onClick={copyToClipboard} className="ml-2">
                 {copied ? (
                   <CheckIcon className="h-5 w-5 text-green-500" />
