@@ -151,7 +151,7 @@ export default function Welcome() {
               </Link>
               <button
                 onClick={() => setConfirmLeaveGroupId(group.id!)}
-                  className="absolute top-2 right-2 text-[#924747] hover:text-red-600"
+                  className="absolute top-2 right-2 text-[#000000] hover:text-red-600"
               >
               <XIcon className="w-5 h-5" />
               </button>
