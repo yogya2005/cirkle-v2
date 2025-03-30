@@ -257,7 +257,7 @@ export default function GroupPage() {
             <HomeIcon className="h-5 w-5" />
             <span>Home</span>
           </Link>
-          <Link href="/pomodoro" className="flex items-center space-x-2 text-black font-medium text-lg">
+          <Link href={`/pomodoro?groupId=${group.id}`} className="flex items-center space-x-2 text-black font-medium text-lg">
             <TimerIcon className="h-5 w-5" />
             <span>Pomodoro</span>
           </Link>
