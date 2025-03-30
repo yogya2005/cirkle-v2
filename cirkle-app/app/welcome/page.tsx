@@ -11,6 +11,8 @@ import { auth } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
 import { useGroups } from "@/hooks/useGroups";
 import { createGroup } from "@/services/groupService";
+import { joinGroup, getGroupById } from '@/services/groupService';
+import ProtectedRoute from "@/components/protected-route";
 
 export default function Welcome() {
   const [modalOpen, setModalOpen] = useState(false);
@@ -70,19 +72,34 @@ export default function Welcome() {
       setIsJoining(true);
       setError(null);
       
-      // Join the group in Firebase
-      // TODO: Implement the logic to join a group using the code
+      // Join the group in Firebase using the joinGroup function from groupService
+      await joinGroup(groupCode.trim(), user.uid);
+      
+      // Get the group details after successfully joining
+      const joinedGroup = await getGroupById(groupCode.trim());
       
       // Refresh the groups list
       await refetch();
       
-      // Reset state
+      // Reset state and close modal
       setModalOpen(false);
       setShowJoinGroup(false);
       setGroupCode("");
+      
+      // Navigate to the joined group
+      router.push(`/group/${encodeURIComponent(joinedGroup.name)}`);
+      
     } catch (err) {
       console.error('Error joining group:', err);
-      setError('Failed to join group. Please try again.');
+      
+      // Handle specific error messages
+      if (err.message === 'Group not found') {
+        setError('Group not found. Please check the code and try again.');
+      } else if (err.message === 'Already a member') {
+        setError('You are already a member of this group.');
+      } else {
+        setError('Failed to join group. Please try again.');
+      }
     } finally {
       setIsJoining(false);
     }
@@ -108,6 +125,7 @@ export default function Welcome() {
   }
 
   return (
+    <ProtectedRoute>
     <main className="min-h-screen bg-[#FAF3E9] flex flex-col items-center p-8">
       {/* Sign Out & Pomodoro Button */}
       <div className="w-full flex justify-end items-center gap-4 max-w-5xl">
@@ -141,14 +159,6 @@ export default function Welcome() {
         <h2 className="text-5xl font-bold text-[#B78D75]">Your Cirkles</h2>
 
         <div className="flex gap-6 mt-6 flex-wrap">
-          {/* Static CMPT 276 Button */}
-          <Link href="/cmpt276">
-            <Button className="w-[240px] h-[140px] flex flex-col items-center justify-center bg-[#924747] hover:bg-[#924747]/90 text-white rounded-xl shadow-md">
-              <img src="/sun.png" alt="Sun Icon" className="h-8 w-8" />
-              <span className="text-lg font-semibold">CMPT 276</span>
-            </Button>
-          </Link>
-
           {/* Dynamically Created Groups */}
           {groups.map((group) => (
             <Link key={group.id} href={`/group/${encodeURIComponent(group.name)}`}>
@@ -268,5 +278,6 @@ export default function Welcome() {
         </div>
       )}
     </main>
+    </ProtectedRoute>
   );
 }

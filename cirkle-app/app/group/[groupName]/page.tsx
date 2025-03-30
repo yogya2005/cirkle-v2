@@ -10,6 +10,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { getGroupById, getGroupInviteCode } from "@/services/groupService";
 import { createGroupDocument, uploadGroupFile } from "@/services/googleDriveService";
 import { requestGooglePermissions, hasValidGoogleToken, saveGoogleTokenData } from "@/services/googleAuthService";
+import { getUserGroups } from '@/services/groupService';
+import ProtectedRoute from "@/components/protected-route";
 
 export default function GroupPage() {
   const params = useParams();
@@ -214,6 +216,7 @@ export default function GroupPage() {
   }
 
   return (
+    <ProtectedRoute>
     <main className="min-h-screen bg-[#FAF3E9] flex flex-col items-center p-8">
       {/* Top Navigation */}
       <div className="w-full max-w-6xl flex justify-between items-center">
@@ -381,5 +384,6 @@ export default function GroupPage() {
         </div>
       </div>
     </main>
+    </ProtectedRoute>
   );
 }

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { HomeIcon, PauseIcon, PlayIcon, SettingsIcon } from "lucide-react";
+import { HomeIcon, PauseIcon, PlayIcon, SettingsIcon, CheckIcon } from "lucide-react";
 import ProtectedRoute from "@/components/protected-route";
 
 type LeaderboardEntry = { name: string; points: number };
