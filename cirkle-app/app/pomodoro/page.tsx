@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { PauseIcon, PlayIcon, CheckIcon, HomeIcon } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { HomeIcon, PauseIcon, PlayIcon, SettingsIcon } from "lucide-react";
+import ProtectedRoute from "@/components/protected-route";
 
 type LeaderboardEntry = { name: string; points: number };
 type LeaderboardData = { [group: string]: LeaderboardEntry[] };
@@ -98,6 +99,7 @@ export default function Pomodoro() {
   };
 
   return (
+    <ProtectedRoute>
     <main className="min-h-screen bg-cream flex flex-col items-center justify-center p-4">
       <div className="max-w-5xl w-full bg-cream rounded-lg p-8 border border-tan/20 flex relative">
         {/* Home Button */}
@@ -198,5 +200,6 @@ export default function Pomodoro() {
         </div>
       </div>
     </main>
+    </ProtectedRoute>
   );
 }

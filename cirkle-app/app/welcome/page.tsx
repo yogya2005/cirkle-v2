@@ -1,165 +1,111 @@
+// app/welcome/page.tsx
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { LogOutIcon, TimerIcon, ArrowLeftIcon } from "lucide-react";
-// Import Firebase auth and Firestore functions
+import { LogOutIcon, TimerIcon } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { createGroup, getUserGroups, joinGroup, getGroupById } from "@/lib/firestore";
+import { useAuth } from "@/hooks/useAuth";
+import { useGroups } from "@/hooks/useGroups";
+import { createGroup } from "@/services/groupService";
 
 export default function Welcome() {
-  const [modelOpen, setModelOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [showGroupInput, setShowGroupInput] = useState(false);
-  const [showJoinInput, setShowJoinInput] = useState(false);
+  const [showJoinGroup, setShowJoinGroup] = useState(false);
   const [groupName, setGroupName] = useState("");
-  const [groupIdToJoin, setGroupIdToJoin] = useState("");
-  const [groups, setGroups] = useState<any[]>([]); 
-  const [loading, setLoading] = useState(false);
-  const [loadingGroups, setLoadingGroups] = useState(true);
+  const [groupCode, setGroupCode] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
+  
+  const { user, logout } = useAuth();
+  const { groups, loading, refetch } = useGroups();
   const router = useRouter();
 
-  // Load user's groups from Firestore when the component mounts
+  // Redirect if user is not logged in
   useEffect(() => {
-    const fetchGroups = async () => {
-      if (!auth.currentUser) return;
-      
-      try {
-        setLoadingGroups(true);
-        const userGroups = await getUserGroups(auth.currentUser.uid);
-        setGroups(userGroups);
-      } catch (err) {
-        console.error('Error fetching groups:', err);
-      } finally {
-        setLoadingGroups(false);
-      }
-    };
-
-    fetchGroups();
-  }, []);
+    if (!user && !loading) {
+      router.push('/');
+    }
+  }, [user, loading, router]);
 
   // Function to handle group creation
   const handleCreateGroup = async () => {
-    if (groupName.trim() === "") {
-      setError("Please enter a group name");
-      return;
-    }
+    if (groupName.trim() === "" || !user) return;
 
     try {
-      setLoading(true);
+      setIsCreating(true);
       setError(null);
-      setSuccess(null);
       
-      if (!auth.currentUser) {
-        setError("You must be logged in to create a group");
-        return;
-      }
+      // Create the group in Firebase
+      const newGroup = await createGroup({ name: groupName }, user.uid);
       
-      // Create group in Firestore
-      const newGroup = await createGroup({ name: groupName }, auth.currentUser.uid);
+      // Refresh the groups list
+      await refetch();
       
-      // Add to local state
-      setGroups((prevGroups) => [...prevGroups, newGroup]);
+      // Navigate to the group page
+      router.push(`/group/${encodeURIComponent(newGroup.name)}`);
       
-      // Show success message
-      setSuccess(`Group "${groupName}" created successfully! ID: ${newGroup.id}`);
-      
-      // Clear input
+      // Reset state
+      setModalOpen(false);
+      setShowGroupInput(false);
       setGroupName("");
-      
-      // Close modal and form after a delay
-      setTimeout(() => {
-        // Navigate to the new group page
-        router.push(`/group/${encodeURIComponent(groupName)}`);
-        
-        // Close modal and reset input
-        setModelOpen(false);
-        setShowGroupInput(false);
-        setSuccess(null);
-      }, 1500);
-      
     } catch (err) {
       console.error('Error creating group:', err);
-      setError("Failed to create group. Please try again.");
+      setError('Failed to create group. Please try again.');
     } finally {
-      setLoading(false);
+      setIsCreating(false);
     }
   };
 
   // Function to handle joining a group
   const handleJoinGroup = async () => {
-    if (groupIdToJoin.trim() === "") {
-      setError("Please enter a group ID");
-      return;
-    }
+    if (groupCode.trim() === "" || !user) return;
 
     try {
-      setLoading(true);
+      setIsJoining(true);
       setError(null);
-      setSuccess(null);
       
-      if (!auth.currentUser) {
-        setError("You must be logged in to join a group");
-        return;
-      }
+      // Join the group in Firebase
+      // TODO: Implement the logic to join a group using the code
       
-      // First check if the group exists
-      const group = await getGroupById(groupIdToJoin.trim());
+      // Refresh the groups list
+      await refetch();
       
-      if (!group) {
-        setError("Group not found. Please check the ID and try again.");
-        return;
-      }
-      
-      // Join group in Firestore
-      const joined = await joinGroup(groupIdToJoin.trim(), auth.currentUser.uid);
-      
-      if (joined) {
-        // Show success message
-        setSuccess(`Successfully joined the group "${group.name}"!`);
-        
-        // Refresh groups list
-        const userGroups = await getUserGroups(auth.currentUser.uid);
-        setGroups(userGroups);
-        
-        // Clear input
-        setGroupIdToJoin("");
-        
-        // Close modal and form after a delay
-        setTimeout(() => {
-          // Navigate to the group page
-          router.push(`/group/${encodeURIComponent(group.name)}`);
-          
-          // Close modal and reset input
-          setModelOpen(false);
-          setShowJoinInput(false);
-          setSuccess(null);
-        }, 1500);
-      } else {
-        setError("You're already a member of this group.");
-      }
-    } catch (err: any) {
+      // Reset state
+      setModalOpen(false);
+      setShowJoinGroup(false);
+      setGroupCode("");
+    } catch (err) {
       console.error('Error joining group:', err);
-      setError(err.message || "Failed to join group. Please verify the group ID and try again.");
+      setError('Failed to join group. Please try again.');
     } finally {
-      setLoading(false);
+      setIsJoining(false);
     }
   };
 
   // Function to handle sign out
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
-      console.log("User signed out successfully");
-      // Redirect to home page after sign out
+      await logout();
       router.push("/");
     } catch (error) {
       console.error("Error signing out:", error);
     }
   };
+
+  // If data is still loading, show a loading state
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[#FAF3E9] flex flex-col items-center justify-center">
+        <div className="text-2xl">Loading...</div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#FAF3E9] flex flex-col items-center p-8">
@@ -184,7 +130,7 @@ export default function Welcome() {
 
       {/* Welcome Heading */}
       <div className="text-center mt-8">
-        <h1 className="text-7xl font-bold text-[#3B2F2F]">Welcome, {auth.currentUser?.displayName?.split(' ')[0] || 'User'}!</h1>
+        <h1 className="text-7xl font-bold text-[#3B2F2F]">Welcome, {user?.displayName?.split(' ')[0] || 'Student'}!</h1>
         <div className="flex justify-center">
           <div className="w-full h-[3px] bg-[#3B2F2F] mt-4"></div>
         </div>
@@ -194,72 +140,66 @@ export default function Welcome() {
       <div className="max-w-5xl w-full mt-10">
         <h2 className="text-5xl font-bold text-[#B78D75]">Your Cirkles</h2>
 
-        {loadingGroups ? (
-          <p className="mt-4">Loading your groups...</p>
-        ) : (
-          <div className="flex gap-6 mt-6 flex-wrap">
-            {/* Static CMPT 276 Button */}
-            <Link href="/cmpt276">
+        <div className="flex gap-6 mt-6 flex-wrap">
+          {/* Static CMPT 276 Button */}
+          <Link href="/cmpt276">
+            <Button className="w-[240px] h-[140px] flex flex-col items-center justify-center bg-[#924747] hover:bg-[#924747]/90 text-white rounded-xl shadow-md">
+              <img src="/sun.png" alt="Sun Icon" className="h-8 w-8" />
+              <span className="text-lg font-semibold">CMPT 276</span>
+            </Button>
+          </Link>
+
+          {/* Dynamically Created Groups */}
+          {groups.map((group) => (
+            <Link key={group.id} href={`/group/${encodeURIComponent(group.name)}`}>
               <Button className="w-[240px] h-[140px] flex flex-col items-center justify-center bg-[#924747] hover:bg-[#924747]/90 text-white rounded-xl shadow-md">
                 <img src="/sun.png" alt="Sun Icon" className="h-8 w-8" />
-                <span className="text-lg font-semibold">CMPT 276</span>
+                <span className="text-lg font-semibold">{group.name}</span>
               </Button>
             </Link>
+          ))}
 
-            {/* Dynamically Created Groups */}
-            {groups.map((group) => (
-              <Link key={group.id} href={`/group/${encodeURIComponent(group.name)}`}>
-                <Button className="w-[240px] h-[140px] flex flex-col items-center justify-center bg-[#924747] hover:bg-[#924747]/90 text-white rounded-xl shadow-md">
-                  <img src="/sun.png" alt="Sun Icon" className="h-8 w-8" />
-                  <span className="text-lg font-semibold">{group.name}</span>
-                </Button>
-              </Link>
-            ))}
-
-            {/* Add or Join Group Button */}
-            <Button
-              onClick={() => setModelOpen(true)}
-              className="w-[240px] h-[140px] flex flex-col items-center justify-center bg-[#924747] hover:bg-[#924747]/90 text-white rounded-xl shadow-md"
-            >
-              <img src="/plus.png" alt="Plus Icon" className="h-8 w-8" />
-              <span className="text-lg font-semibold">Add or Join</span>
-            </Button>
-          </div>
-        )}
+          {/* Add or Join Group Button */}
+          <Button
+            onClick={() => setModalOpen(true)}
+            className="w-[240px] h-[140px] flex flex-col items-center justify-center bg-[#924747] hover:bg-[#924747]/90 text-white rounded-xl shadow-md"
+          >
+            <img src="/plus.png" alt="Plus Icon" className="h-8 w-8" />
+            <span className="text-lg font-semibold">Add or Join</span>
+          </Button>
+        </div>
       </div>
 
       {/* Modal */}
-      {modelOpen && (
+      {modalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-gradient-to-b from-[#EDE0D4] to-[#FAF3E9] w-[320px] p-6 rounded-2xl shadow-lg relative">
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 text-red-500 text-center">
+                {error}
+              </div>
+            )}
+            
             {/* Back Button */}
             <button
               onClick={() => {
-                if (showGroupInput || showJoinInput) {
+                if (showGroupInput || showJoinGroup) {
                   setShowGroupInput(false);
-                  setShowJoinInput(false);
+                  setShowJoinGroup(false);
                   setGroupName("");
-                  setGroupIdToJoin("");
+                  setGroupCode("");
                   setError(null);
-                  setSuccess(null);
                 } else {
-                  setModelOpen(false);
+                  setModalOpen(false);
                 }
               }}
               className="absolute top-4 left-4 text-black"
             >
-              <ArrowLeftIcon className="h-6 w-6" />
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
             </button>
-
-            {/* Error message if any */}
-            {error && (
-              <p className="text-red-500 text-sm mb-4 text-center">{error}</p>
-            )}
-
-            {/* Success message if any */}
-            {success && (
-              <p className="text-green-500 text-sm mb-4 text-center">{success}</p>
-            )}
 
             {/* Create Group Form */}
             {showGroupInput ? (
@@ -276,42 +216,48 @@ export default function Welcome() {
                 />
                 <Button
                   onClick={handleCreateGroup}
-                  disabled={loading}
+                  disabled={isCreating || !groupName.trim()}
                   className="bg-[#924747] hover:bg-[#924747]/90 text-white rounded-full px-6 py-3 text-lg font-medium w-full"
                 >
-                  {loading ? 'Creating...' : 'Create Group'}
+                  {isCreating ? "Creating..." : "Create Group"}
                 </Button>
               </div>
-            ) : showJoinInput ? (
+            ) : showJoinGroup ? (
               <div className="flex flex-col gap-6 mt-8">
                 <h2 className="text-xl font-semibold text-[#3B2F2F] text-center">
-                  Enter Group ID
+                  Enter Group Code
                 </h2>
                 <input
                   type="text"
-                  value={groupIdToJoin}
-                  onChange={(e) => setGroupIdToJoin(e.target.value)}
-                  placeholder="Group ID"
+                  value={groupCode}
+                  onChange={(e) => setGroupCode(e.target.value)}
+                  placeholder="Group Code"
                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#924747]"
                 />
                 <Button
                   onClick={handleJoinGroup}
-                  disabled={loading}
+                  disabled={isJoining || !groupCode.trim()}
                   className="bg-[#924747] hover:bg-[#924747]/90 text-white rounded-full px-6 py-3 text-lg font-medium w-full"
                 >
-                  {loading ? 'Joining...' : 'Join Group'}
+                  {isJoining ? "Joining..." : "Join Group"}
                 </Button>
               </div>
             ) : (
               <div className="flex flex-col gap-6 mt-8">
                 <Button
-                  onClick={() => setShowGroupInput(true)}
+                  onClick={() => {
+                    setShowGroupInput(true);
+                    setShowJoinGroup(false);
+                  }}
                   className="bg-[#924747] hover:bg-[#924747]/90 text-white rounded-full px-6 py-3 text-lg font-medium w-full"
                 >
                   Create a Group
                 </Button>
                 <Button 
-                  onClick={() => setShowJoinInput(true)}
+                  onClick={() => {
+                    setShowGroupInput(false);
+                    setShowJoinGroup(true);
+                  }}
                   className="bg-[#924747] hover:bg-[#924747]/90 text-white rounded-full px-6 py-3 text-lg font-medium w-full"
                 >
                   Join an Existing Group

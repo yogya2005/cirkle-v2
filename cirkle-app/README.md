@@ -8,7 +8,7 @@ iii. npm install @react-oauth/google@latest googleapis@latest --force
 
 2. Ask for the .env file from the owner and make sure to place it outside any folders in your app.
 
-3. run "npm start" to start the build. 
+3. run "npm run dev" to start the build. 
 Note: The website should be running on localhost:3000 as that is what has been configured. Please ensure that this port is free.
 
 Enjoy!
