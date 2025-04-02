@@ -246,6 +246,15 @@ export default function GroupPage() {
     );
   }
 
+  if (!group || !group.id || !group.resources) {
+    return (
+      <main className="min-h-screen bg-[#FAF3E9] flex flex-col items-center justify-center">
+        <div className="text-2xl text-gray-700">Group data is still loading...</div>
+      </main>
+    );
+  }
+  
+
   return (
     <ProtectedRoute>
     <main className="min-h-screen bg-[#FAF3E9] flex flex-col items-center p-8">
