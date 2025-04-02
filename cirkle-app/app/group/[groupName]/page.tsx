@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { HomeIcon, TimerIcon, PlusIcon, ClipboardIcon, CheckIcon, UploadIcon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { getGroupById, getGroupInviteCode } from "@/services/groupService";
-import { createGroupDocument, uploadGroupFile } from "@/services/googleDriveService";
-import { requestGooglePermissions, hasValidGoogleToken, saveGoogleTokenData } from "@/services/googleAuthService";
+import { createGroupDocument, uploadGroupFile, deleteGroupFile, deleteGroupDocument } from "@/services/googleDriveService";
+import { requestGooglePermissions, hasValidGoogleToken, saveGoogleTokenData, getGoogleAccessToken } from "@/services/googleAuthService";
 import { getUserGroups } from '@/services/groupService';
 import ProtectedRoute from "@/components/protected-route";
 import { getUserById } from '@/services/userService';
@@ -190,6 +190,49 @@ export default function GroupPage() {
       setIsUploadingFile(false);
     }
   };
+
+  const handleDeleteResource = async (type: 'document' | 'file', resourceId: string) => {
+    if (!group || !user) return;
+  
+    try {
+      setError(null);
+      setSuccessMessage('Deleting...');
+  
+      // Step 1: Call backend API to delete from Google Drive
+      const accessToken = getGoogleAccessToken(); // from your googleAuthService
+      const response = await fetch('/api/delete-drive-file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileId: resourceId, accessToken })
+      });
+      
+      if (!response.ok) {
+        const errorDetails = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error("Google Drive API error details:", errorDetails); // 🔍 LOG IT
+        throw new Error(`Google Drive deletion failed: ${errorDetails.error}`);
+      }
+      
+  
+      // Step 2: Call the Firestore update function (still needed to remove from database)
+      if (type === 'document') {
+        await deleteGroupDocument(group.id, resourceId); // only updates Firestore
+      } else {
+        await deleteGroupFile(group.id, resourceId); // only updates Firestore
+      }
+  
+      // Step 3: Refresh group data
+      const refreshedGroup = await getGroupById(group.id);
+      setGroup(refreshedGroup);
+  
+      setSuccessMessage(`${type === 'document' ? 'Document' : 'File'} deleted successfully!`);
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error(`Failed to delete ${type}:`, err);
+      setError(`Failed to delete ${type}. Please try again.`);
+    }
+  };
+  
+  
 
   // Request Google permissions if needed
   const ensureGooglePermissions = async (): Promise<boolean> => {
@@ -372,20 +415,31 @@ export default function GroupPage() {
           <div className="flex gap-6 mt-4 flex-wrap">
             {/* Display existing documents */}
             {group?.resources?.documents?.map((doc: any) => (
-              <a 
-                key={doc.id}
-                href={doc.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-[200px] h-[100px]"
-              >
-                <Button className="w-full h-full flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
-                  <span className="text-lg font-semibold truncate text-ellipsis overflow-hidden whitespace-nowrap w-full text-center px-2">
-                    {doc.name}
-                  </span>
-                </Button>
-              </a>
-            ))}
+          <div 
+            key={doc.id}
+            className="relative w-[200px] h-[100px]"
+          >
+            <a 
+              href={doc.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full h-full"
+            >
+              <Button className="w-full h-full flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
+                <span className="text-lg font-semibold truncate text-ellipsis overflow-hidden whitespace-nowrap w-full text-center px-2">
+                  {doc.name}
+                </span>
+              </Button>
+            </a>
+            <button
+              onClick={() => handleDeleteResource('document', doc.id)}
+              className="absolute top-1 right-1 bg-white rounded-full w-5 h-5 text-sm text-black flex items-center justify-center shadow"
+              title="Delete document"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
             
             <Button 
               className="w-[200px] h-[100px] flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md"
@@ -400,22 +454,35 @@ export default function GroupPage() {
         <h2 className="text-3xl font-bold text-[#B78D75] mt-10">File Uploads</h2>
         <div className="flex gap-6 mt-4 flex-wrap">
           {/* Display existing files */}
-          {group?.resources?.files?.map((file: any) => (
-            <a 
-              key={file.id}
-              href={file.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-[200px] h-[100px]"
-            >
-              <Button className="w-full h-full flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
-                <span className="text-lg font-semibold truncate text-ellipsis overflow-hidden whitespace-nowrap w-full text-center px-2">
-                  {file.name}
-             </span>
-          </Button>
+          
 
-            </a>
-          ))}
+          {group?.resources?.files?.map((file: any) => (
+        <div 
+          key={file.id}
+          className="relative w-[200px] h-[100px]"
+        >
+          <a 
+            href={file.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full h-full"
+          >
+            <Button className="w-full h-full flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
+              <span className="text-lg font-semibold truncate text-ellipsis overflow-hidden whitespace-nowrap w-full text-center px-2">
+                {file.name}
+              </span>
+            </Button>
+          </a>
+          <button
+            onClick={() => handleDeleteResource('file', file.id)}
+            className="absolute top-1 right-1 bg-white rounded-full w-5 h-5 text-sm text-black flex items-center justify-center shadow"
+            title="Delete file"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+
           
           <label className="w-[200px] h-[100px] cursor-pointer">
             <input
