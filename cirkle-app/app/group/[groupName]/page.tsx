@@ -14,6 +14,7 @@ import { getUserGroups } from '@/services/groupService';
 import ProtectedRoute from "@/components/protected-route";
 import { getUserById } from '@/services/userService';
 import { Tooltip } from '@/components/ui/tooltip';
+import { XIcon } from "lucide-react";
 
 export default function GroupPage() {
   const params = useParams();
@@ -435,10 +436,9 @@ export default function GroupPage() {
             </a>
             <button
               onClick={() => handleDeleteResource('document', doc.id)}
-              className="absolute top-1 right-1 bg-white rounded-full w-5 h-5 text-sm text-black flex items-center justify-center shadow"
-              title="Delete document"
-            >
-              ✕
+              className="absolute top-1 right-1 w-5 h-5 text-sm text-black flex items-center justify-center  hover:text-red-600"
+              title="Delete document">
+              <XIcon className="w-5 h-5" />
             </button>
           </div>
         ))}
@@ -477,10 +477,11 @@ export default function GroupPage() {
           </a>
           <button
             onClick={() => handleDeleteResource('file', file.id)}
-            className="absolute top-1 right-1 bg-white rounded-full w-5 h-5 text-sm text-black flex items-center justify-center shadow"
-            title="Delete file"
-          >
-            ✕
+            className="absolute top-1 right-1 w-5 h-5 text-sm text-black flex items-center justify-center  hover:text-red-600"
+            title="Delete file">
+           <XIcon className="w-5 h-5" />
+        
+            
           </button>
         </div>
       ))}
