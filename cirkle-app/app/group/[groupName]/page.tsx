@@ -196,39 +196,39 @@ export default function GroupPage() {
   
     try {
       setError(null);
-      setSuccessMessage('Deleting...');
+      setSuccessMessage("Deleting...");
   
-      // Step 1: Call backend API to delete from Google Drive
-      const accessToken = getGoogleAccessToken(); // from your googleAuthService
-      const response = await fetch('/api/delete-drive-file', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileId: resourceId, accessToken })
+      const hasPermissions = await ensureGooglePermissions();
+      if (!hasPermissions) return;
+  
+      const accessToken = getGoogleAccessToken();
+      if (!accessToken) throw new Error("Access token missing");
+  
+      const response = await fetch("/api/delete-drive-file", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileId: resourceId, accessToken }),
       });
-      
+  
       if (!response.ok) {
-        const errorDetails = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error("Google Drive API error details:", errorDetails); // 🔍 LOG IT
-        throw new Error(`Google Drive deletion failed: ${errorDetails.error}`);
+        const error = await response.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(`Google Drive deletion failed: ${error.error}`);
       }
-      
   
-      // Step 2: Call the Firestore update function (still needed to remove from database)
-      if (type === 'document') {
-        await deleteGroupDocument(group.id, resourceId); // only updates Firestore
+      // Firestore update
+      if (type === "document") {
+        await deleteGroupDocument(group.id, resourceId);
       } else {
-        await deleteGroupFile(group.id, resourceId); // only updates Firestore
+        await deleteGroupFile(group.id, resourceId);
       }
   
-      // Step 3: Refresh group data
       const refreshedGroup = await getGroupById(group.id);
       setGroup(refreshedGroup);
-  
-      setSuccessMessage(`${type === 'document' ? 'Document' : 'File'} deleted successfully!`);
+      setSuccessMessage(`${type === "document" ? "Document" : "File"} deleted successfully!`);
       setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (err) {
+    } catch (err: any) {
       console.error(`Failed to delete ${type}:`, err);
-      setError(`Failed to delete ${type}. Please try again.`);
+      setError(`Failed to delete ${type}. ${err.message || "Please try again."}`);
     }
   };
   
@@ -238,20 +238,22 @@ export default function GroupPage() {
   const ensureGooglePermissions = async (): Promise<boolean> => {
     if (!hasValidGoogleToken()) {
       try {
-        setSuccessMessage('Requesting Google Drive permissions...');
         const tokenData = await requestGooglePermissions();
-        saveGoogleTokenData(tokenData);
-        setSuccessMessage('Permissions granted successfully!');
+        if (!tokenData) {
+          setError("You must grant Google Drive access to delete or upload files.");
+          return false;
+        }
+        saveGoogleTokenData(tokenData); // if needed
         return true;
-      } catch (error) {
-        console.error('Failed to get Google permissions:', error);
-        setError('Please grant permission to access Google Drive to create documents and upload files.');
-        setSuccessMessage(null);
+      } catch (err) {
+        console.error("Google auth error:", err);
+        setError("Google Drive authentication failed. Please try again.");
         return false;
       }
     }
     return true;
   };
+  
 
   // Helper function to format date safely
   const formatDate = (timestamp: any): string => {

@@ -21,38 +21,26 @@ interface TokenData {
  * Request Google Drive permissions
  * @returns Promise with token data
  */
-export const requestGooglePermissions = async (): Promise<TokenData> => {
-  try {
-    // Force account selection to get a fresh token with the right scope
-    googleProvider.setCustomParameters({
-      prompt: 'consent'
-    });
-    
-    // Sign in with popup to get Google Auth result with token
-    const result = await signInWithPopup(auth, googleProvider);
-    
-    // Get the OAuth access token
-    const credential = GoogleAuthProvider.credentialFromResult(result);
-    if (!credential) {
-      throw new Error('No credential returned from Google Auth');
-    }
-    
-    const token = credential.accessToken;
-    if (!token) {
-      throw new Error('No token returned from Google Auth');
-    }
-    
-    // Return relevant auth data
-    return {
-      user: result.user,
-      token,
-      expiresAt: new Date().getTime() + 3600 * 1000, // Token expires in 1 hour
-    };
-  } catch (error) {
-    console.error('Error requesting Google permissions:', error);
-    throw error;
-  }
+export const requestGooglePermissions = async () => {
+  const provider = new GoogleAuthProvider();
+  provider.addScope("https://www.googleapis.com/auth/drive.file");
+
+  const result = await signInWithPopup(auth, provider);
+  const credential = GoogleAuthProvider.credentialFromResult(result);
+  const token = credential?.accessToken;
+
+  if (!token) throw new Error("No access token received");
+
+  const tokenData = {
+    token, // your app expects this key
+    user: auth.currentUser?.uid || "unknown",
+    expiresAt: Date.now() + 3600 * 1000, // set expiry to 1 hour
+  };
+
+  localStorage.setItem("google_token", JSON.stringify(tokenData));
+  return tokenData;
 };
+
 
 /**
  * Check if we have a valid Google API token
@@ -91,20 +79,20 @@ export const saveGoogleTokenData = (tokenData: TokenData): void => {
  * @returns The access token or null if not available
  */
 export const getGoogleAccessToken = (): string | null => {
-  if (!hasValidGoogleToken() || typeof window === 'undefined') {
-    return null;
-  }
-  
-  const tokenDataStr = localStorage.getItem('googleTokenData');
-  if (!tokenDataStr) return null;
-  
+  if (typeof window === "undefined") return null;
+
+  const raw = localStorage.getItem("google_token");
+  if (!raw) return null;
+
   try {
-    const tokenData = JSON.parse(tokenDataStr) as TokenData;
-    return tokenData.token;
-  } catch (e) {
+    const parsed = JSON.parse(raw);
+    return parsed.token || null;
+  } catch {
     return null;
   }
 };
+
+
 
 /**
  * Clear any saved Google token data
