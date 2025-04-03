@@ -112,30 +112,38 @@ export default function Welcome() {
   return (
     <ProtectedRoute>
     <main className="min-h-screen bg-[#FAF3E9] flex flex-col items-center p-8">
-      <div className="w-full flex justify-end items-center gap-4 max-w-5xl">
-        <Button 
-          onClick={handleSignOut} 
-          variant="ghost" 
-          className="flex items-center text-black font-medium text-lg"
-        >
-          <LogOutIcon className="h-5 w-5 mr-2" />
-          Sign Out
-        </Button>
+    <div className="w-full flex justify-between items-center gap-4 max-w-5xl">
+  {/* Left-aligned Pomodoro button */}
+    <Link href="/pomodoro">
+      <Button className="flex items-center gap-2 bg-[#924747] hover:bg-[#924747]/90 text-white rounded-full px-6 py-3 text-lg font-medium">
+        <TimerIcon className="h-5 w-5" />
+        Start a Pomodoro
+      </Button>
+    </Link>
 
-        <Link href="/pomodoro">
-          <Button className="flex items-center gap-2 bg-[#924747] hover:bg-[#924747]/90 text-white rounded-full px-6 py-3 text-lg font-medium">
-            <TimerIcon className="h-5 w-5" />
-            Start a Pomodoro
-          </Button>
-        </Link>
-      </div>
+    {/* Right-aligned Sign Out button */}
+    <Button 
+      onClick={handleSignOut} 
+      variant="ghost" 
+      className="flex items-center text-black font-medium text-lg"
+    >
+      <LogOutIcon className="h-5 w-5 mr-2" />
+      Sign Out
+    </Button>
+  </div>
 
-      <div className="text-center mt-8">
-        <h1 className="text-7xl font-bold text-[#3B2F2F]">Welcome, {user?.displayName?.split(' ')[0] || 'Student'}!</h1>
-        <div className="flex justify-center">
-          <div className="w-full h-[3px] bg-[#3B2F2F] mt-4"></div>
-        </div>
-      </div>
+  <div className="w-full max-w-5xl text-left mt-12">
+  <div className="bg-[#F5EDE3] p-6 rounded-3xl shadow-md border border-[#E6D8C2]">
+    <h1 className="text-6xl font-extrabold text-[#3B2F2F] leading-tight">
+      Welcome back, <span className="text-[#924747]">{user?.displayName?.split(' ')[0] || 'Student'}!</span>
+    </h1>
+    <p className="text-xl text-[#7A5B47] mt-2">
+      Let’s get you focused and connected with your cirkles today ✨
+    </p>
+
+    <div className="w-24 h-[4px] bg-[#924747] rounded-full mt-4"></div>
+  </div>
+</div>
 
       <div className="max-w-5xl w-full mt-10">
         <h2 className="text-5xl font-bold text-[#B78D75]">Your Cirkles</h2>

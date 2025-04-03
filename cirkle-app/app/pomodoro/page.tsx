@@ -1,11 +1,10 @@
-// app/pomodoro/page.tsx
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { HomeIcon, PauseIcon, PlayIcon, SettingsIcon, CheckIcon } from "lucide-react";
+import { HomeIcon, PauseIcon, PlayIcon, CheckIcon, LogOutIcon } from "lucide-react";
 import ProtectedRoute from "@/components/protected-route";
 import { useAuth } from "@/hooks/useAuth";
 import { useGroups } from "@/hooks/useGroups";
@@ -18,97 +17,98 @@ interface ScoreEntry {
   score: number;
 }
 
-// Component that uses searchParams
 function PomodoroContent() {
   const [minutes, setMinutes] = useState(25);
   const [seconds, setSeconds] = useState(0);
   const [isActive, setIsActive] = useState(false);
-  const [isOnBreak, setIsOnBreak] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [inputMinutes, setInputMinutes] = useState(25);
+  const [selectedDuration, setSelectedDuration] = useState("25");
+  const [customMinutes, setCustomMinutes] = useState(0);
+  const [customSeconds, setCustomSeconds] = useState(30);
   const [scores, setScores] = useState<ScoreEntry[]>([]);
-  
-  const { user } = useAuth();
+  const [timerPointsEarned, setTimerPointsEarned] = useState(0);
+
+  const { user, logout } = useAuth();
   const { groups, loading: groupsLoading } = useGroups();
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-  const [timerPointsEarned, setTimerPointsEarned] = useState(0);
-  
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialTimeRef = useRef<number>(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Set the selected group based on the URL parameter or first available group
   useEffect(() => {
-    const groupIdFromUrl = searchParams.get('groupId');
-    
-    if (groupIdFromUrl && groups.some(g => g.id === groupIdFromUrl)) {
+    const groupIdFromUrl = searchParams.get("groupId");
+    if (groupIdFromUrl && groups.some((g) => g.id === groupIdFromUrl)) {
       setSelectedGroup(groupIdFromUrl);
     } else if (groups.length > 0 && !selectedGroup) {
       setSelectedGroup(groups[0].id);
     }
   }, [groups, searchParams, selectedGroup]);
 
-  // Fetch scores for the selected group
   useEffect(() => {
     const fetchScores = async () => {
       if (!selectedGroup) return;
-      
       try {
         const groupScores = await getGroupScores(selectedGroup);
         setScores(groupScores);
       } catch (err) {
-        console.error('Error fetching scores:', err);
+        console.error("Error fetching scores:", err);
       }
     };
-    
     fetchScores();
   }, [selectedGroup]);
 
-  // Timer logic
   useEffect(() => {
     if (isActive) {
       initialTimeRef.current = initialTimeRef.current || minutes * 60 + seconds;
-      
       timerRef.current = setInterval(() => {
         if (seconds === 0) {
           if (minutes === 0) {
             clearInterval(timerRef.current as NodeJS.Timeout);
             setIsActive(false);
-            
-            // Calculate points earned if not on break and update score
-            if (!isOnBreak && user && selectedGroup) {
-              const pointsEarned = Math.floor(initialTimeRef.current / 60);
+
+            if (user && selectedGroup) {
+              const rawSeconds = initialTimeRef.current;
+              const pointsEarned = Math.max(1, Math.floor(rawSeconds / 60));
               setTimerPointsEarned(pointsEarned);
-              
+
               updateUserScore(
                 selectedGroup,
                 user.uid,
-                user.displayName || 'Unknown User',
-                user.email || '',
+                user.displayName || "Unknown User",
+                user.email || "",
                 pointsEarned
-              ).then(newScore => {
-                // Update local scores
-                setScores(prev => {
+              ).then((newScore) => {
+                setScores((prev) => {
                   const newScores = [...prev];
-                  const userScoreIndex = newScores.findIndex(s => s.userId === user.uid);
-                  
-                  if (userScoreIndex >= 0) {
-                    newScores[userScoreIndex].score = newScore;
+                  const idx = newScores.findIndex((s) => s.userId === user.uid);
+                  if (idx >= 0) {
+                    newScores[idx].score = newScore;
                   } else {
                     newScores.push({
                       userId: user.uid,
-                      userName: user.displayName || 'Unknown User',
-                      userEmail: user.email || '',
-                      score: newScore
+                      userName: user.displayName || "Unknown User",
+                      userEmail: user.email || "",
+                      score: newScore,
                     });
                   }
-                  
                   return newScores.sort((a, b) => b.score - a.score);
                 });
               });
             }
-            
+
+            setTimeout(() => {
+              if (selectedDuration === "custom") {
+                setMinutes(customMinutes);
+                setSeconds(customSeconds);
+              } else {
+                setMinutes(parseInt(selectedDuration));
+                setSeconds(0);
+              }
+              initialTimeRef.current = 0;
+              setTimerPointsEarned(0);
+            }, 1000);
+
             return;
           }
           setMinutes((prev) => prev - 1);
@@ -124,13 +124,10 @@ function PomodoroContent() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isActive, minutes, seconds, isOnBreak, user, selectedGroup]);
+  }, [isActive, minutes, seconds, user, selectedGroup]);
 
   const toggleTimer = () => {
-    if (isOnBreak) setIsOnBreak(false);
     setIsActive(!isActive);
-    
-    // Reset initial time reference when starting a new timer
     if (!isActive) {
       initialTimeRef.current = 0;
       setTimerPointsEarned(0);
@@ -139,169 +136,224 @@ function PomodoroContent() {
 
   const resetTimer = () => {
     setIsActive(false);
-    setIsOnBreak(false);
-    setMinutes(inputMinutes);
-    setSeconds(0);
     initialTimeRef.current = 0;
     setTimerPointsEarned(0);
-  };
-
-  const handleBreak = () => {
-    if (isOnBreak) {
-      setIsOnBreak(false);
-      setIsActive(true);
+    if (selectedDuration === "custom") {
+      setMinutes(customMinutes);
+      setSeconds(customSeconds);
     } else {
-      setIsOnBreak(true);
-      setIsActive(false);
+      setMinutes(parseInt(selectedDuration));
+      setSeconds(0);
     }
   };
 
-  const handleMinutesClick = () => {
-    if (!isActive && !isOnBreak) setIsEditing(true);
-  };
-
-  const handleMinutesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value) && value >= 0) {
-      setInputMinutes(value);
+  const handleDurationChange = (value: string) => {
+    setSelectedDuration(value);
+    if (value !== "custom") {
+      setMinutes(parseInt(value));
+      setSeconds(0);
     }
   };
 
-  const handleMinutesBlur = () => {
-    setIsEditing(false);
-    setMinutes(inputMinutes);
-    setSeconds(0);
+  const submitCustomDuration = () => {
+    if (!isActive && (customMinutes > 0 || customSeconds > 0)) {
+      setMinutes(customMinutes);
+      setSeconds(customSeconds);
+    }
   };
 
   const handleGroupChange = (groupId: string) => {
     setSelectedGroup(groupId);
   };
 
-  // Show loading state while groups are loading
+  const handleSignOut = async () => {
+    try {
+      await logout();
+      router.push("/");
+    } catch (err) {
+      console.error("Error signing out:", err);
+    }
+  };
+
   if (groupsLoading) {
     return (
-      <div className="min-h-screen bg-cream flex flex-col items-center justify-center">
-        <p className="text-lg">Loading...</p>
+      <div className="min-h-screen bg-[#FAF3E9] flex items-center justify-center">
+        <p className="text-lg text-[#3B2F2F]">Loading...</p>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-cream flex flex-col items-center justify-center p-4">
-      <div className="max-w-5xl w-full bg-cream rounded-lg p-8 border border-tan/20 flex relative">
+    <main className="min-h-screen bg-[#FAF3E9] pt-8 px-8">
+      {/* Top Action Bar */}
+      <div className="w-full max-w-6xl mx-auto flex justify-between items-center mb-6">
         {/* Home Button */}
         <Link href="/welcome">
-          <Button variant="ghost" size="icon" className="absolute top-4 left-4 rounded-full border border-[#3b2f2f]">
-            <HomeIcon className="h-5 w-5 text-[#3b2f2f]" />
+          <Button className="flex items-center gap-2 bg-[#924747] hover:bg-[#924747]/90 text-white rounded-full px-6 py-3 text-lg font-medium shadow">
+            <HomeIcon className="h-5 w-5" />
+            Home
           </Button>
         </Link>
 
-        {/* Timer Section */}
-        <div className="flex-1 flex flex-col items-center justify-center">
-          <div className="relative w-48 h-48 flex items-center justify-center border-4 border-[#924747] rounded-full mb-6">
-            <div className="text-4xl font-bold text-[#924747]">
-              {isEditing ? (
-                <input
-                  type="number"
-                  value={inputMinutes}
-                  onChange={handleMinutesChange}
-                  onBlur={handleMinutesBlur}
-                  className="w-16 p-1 border rounded text-center"
-                  min={1}
-                  autoFocus
-                />
-              ) : (
-                <span onClick={handleMinutesClick} className="cursor-pointer">
-                  {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
-                </span>
-              )}
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute bottom-4 bg-cream rounded-full border border-[#924747] p-1"
-              onClick={toggleTimer}
-            >
-              {isActive ? (
-                <PauseIcon className="h-4 w-4 text-[#924747]" />
-              ) : (
-                <PlayIcon className="h-4 w-4 text-[#924747]" />
-              )}
-            </Button>
-          </div>
+        {/* Sign Out Button */}
+        <Button
+          onClick={handleSignOut}
+          variant="ghost"
+          className="flex items-center text-black font-medium text-lg"
+        >
+          <LogOutIcon className="h-5 w-5 mr-2" />
+          Sign Out
+        </Button>
+      </div>
 
-          {isOnBreak && (
-            <div className="text-red-500 mt-2">On Break</div>
-          )}
-
-          {timerPointsEarned > 0 && !isActive && !isOnBreak && (
-            <div className="text-green-500 mt-2">
-              +{timerPointsEarned} points earned!
-            </div>
-          )}
-
-          <div className="w-full flex flex-col space-y-2">
-            <Button
-              variant="outline"
-              className="w-full border-[#3b2f2f] text-[#3b2f2f] bg-transparent hover:bg-[#3b2f2f]/10 rounded-md"
-              onClick={handleBreak}
-            >
-              {isOnBreak ? "Resume" : "Break"}
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full border-[#3b2f2f] text-[#3b2f2f] bg-transparent hover:bg-[#3b2f2f]/10 rounded-md"
-              onClick={resetTimer}
-            >
-              Reset Timer
-            </Button>
-          </div>
+      {/* Header Section */}
+      <div className="max-w-6xl mx-auto mb-6">
+        <div className="bg-[#F9F0E6] rounded-2xl shadow p-6 border border-[#E4D5C2]">
+          <h1 className="text-4xl font-extrabold text-[#3B2F2F] mb-2">Pomodoro</h1>
+          <p className="text-[#5C4A3F] text-base">
+            Stay focused and earn points with your circle ⏱️
+          </p>
         </div>
+      </div>
 
-        {/* Sidebar */}
-        <div className="w-1/3 ml-8">
-          {/* Group Selection */}
-          <h2 className="text-xl font-bold text-[#3b2f2f] mb-4">Groups</h2>
-          <div className="flex flex-col space-y-2 mb-8">
-            {groups.length > 0 ? (
-              groups.map((group) => (
-                <Button
-                  key={group.id}
-                  variant={selectedGroup === group.id ? "default" : "outline"}
-                  className={`w-full ${
-                    selectedGroup === group.id
-                      ? "bg-[#3b2f2f] text-white"
-                      : "border-[#3b2f2f] text-[#3b2f2f] bg-transparent hover:bg-[#3b2f2f]/10"
-                  } rounded-md flex justify-between items-center`}
-                  onClick={() => handleGroupChange(group.id)}
+      {/* Main Content */}
+      <div className="relative w-full max-w-6xl mx-auto">
+        <div className="bg-white rounded-3xl p-8 shadow-md border border-[#E4D5C2] flex flex-col gap-6">
+          <div className="flex gap-8">
+            {/* Timer */}
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <div className="w-48 h-48 flex items-center justify-center border-4 border-[#924747] rounded-full mb-4">
+                <div className="text-4xl font-bold text-[#924747]">
+                  {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+                </div>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="mb-4 bg-[#FAF3E9] rounded-full border border-[#924747] p-2"
+                onClick={toggleTimer}
+              >
+                {isActive ? (
+                  <PauseIcon className="h-6 w-6 text-[#924747]" />
+                ) : (
+                  <PlayIcon className="h-6 w-6 text-[#924747]" />
+                )}
+              </Button>
+
+              {timerPointsEarned > 0 && !isActive && (
+                <div className="text-green-600 mt-1 text-sm">
+                  +{timerPointsEarned} points earned!
+                </div>
+              )}
+
+              {/* Duration selector */}
+              <div className="w-full max-w-sm mt-6">
+                <label className="block mb-1 text-sm font-medium text-[#3B2F2F]">Set Timer Duration</label>
+                <select
+                  value={selectedDuration}
+                  onChange={(e) => handleDurationChange(e.target.value)}
+                  disabled={isActive}
+                  className="w-full border border-[#3B2F2F] rounded-lg px-4 py-2 text-sm text-[#3B2F2F] bg-white"
                 >
-                  {group.name}
-                  {selectedGroup === group.id && <CheckIcon className="h-4 w-4 ml-2" />}
-                </Button>
-              ))
-            ) : (
-              <p className="text-[#3b2f2f] text-sm">
-                No groups found. Create or join a group to track your progress.
-              </p>
-            )}
-          </div>
+                  <option value="15">15 minutes</option>
+                  <option value="25">25 minutes</option>
+                  <option value="30">30 minutes</option>
+                  <option value="45">45 minutes</option>
+                  <option value="custom">Custom</option>
+                </select>
 
-          {/* Leaderboard */}
-          <h2 className="text-xl font-bold text-[#3b2f2f] mb-4">Leaderboard</h2>
-          {scores.length > 0 ? (
-            <ul className="space-y-2">
-              {scores.map((entry, index) => (
-                <li key={entry.userId} className="flex justify-between text-[#3b2f2f]">
-                  <span>{entry.userName.split(' ')[0]}</span>
-                  <span>{entry.score} pts</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-[#3b2f2f] text-sm">
-              No scores yet. Complete a pomodoro session to earn points!
-            </p>
-          )}
+                {selectedDuration === "custom" && (
+                  <div className="mt-3 space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        value={customMinutes}
+                        onChange={(e) => setCustomMinutes(Math.max(0, parseInt(e.target.value) || 0))}
+                        disabled={isActive}
+                        placeholder="Minutes"
+                        className="w-1/2 border border-[#3B2F2F] rounded-lg px-4 py-2 text-sm text-[#3B2F2F] bg-white"
+                      />
+                      <input
+                        type="number"
+                        min="0"
+                        value={customSeconds}
+                        onChange={(e) => setCustomSeconds(Math.max(0, parseInt(e.target.value) || 0))}
+                        disabled={isActive}
+                        placeholder="Seconds"
+                        className="w-1/2 border border-[#3B2F2F] rounded-lg px-4 py-2 text-sm text-[#3B2F2F] bg-white"
+                      />
+                    </div>
+                    <Button
+                      onClick={submitCustomDuration}
+                      disabled={isActive || (customMinutes === 0 && customSeconds === 0)}
+                      className="w-full bg-[#924747] hover:bg-[#924747]/90 text-white text-sm font-medium rounded-full py-2"
+                    >
+                      Set Duration
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <Button
+                onClick={resetTimer}
+                variant="outline"
+                className="mt-4 rounded-full py-2 border-[#3B2F2F] text-[#3B2F2F] hover:bg-[#3B2F2F]/10 text-sm w-full max-w-sm"
+              >
+                Reset Timer
+              </Button>
+            </div>
+
+            {/* Sidebar */}
+            <div className="w-1/3">
+              <h2 className="text-xl font-bold text-[#3B2F2F] mb-4">Groups</h2>
+              <div className="flex flex-col space-y-2 mb-8">
+                {groups.length > 0 ? (
+                  groups.map((group) => (
+                    <Button
+                      key={group.id}
+                      variant={selectedGroup === group.id ? "default" : "outline"}
+                      className={`w-full ${
+                        selectedGroup === group.id
+                          ? "bg-[#3B2F2F] text-white"
+                          : "border-[#3B2F2F] text-[#3B2F2F] bg-transparent hover:bg-[#3B2F2F]/10"
+                      } rounded-full text-sm flex justify-between items-center px-4 py-2`}
+                      onClick={() => handleGroupChange(group.id)}
+                    >
+                      <span className="truncate overflow-hidden whitespace-nowrap w-full text-left">
+                        {group.name}
+                      </span>
+                      {selectedGroup === group.id && <CheckIcon className="h-4 w-4 ml-2 shrink-0" />}
+                    </Button>
+                  ))
+                ) : (
+                  <p className="text-[#3B2F2F] text-sm">
+                    No groups found. Create or join a group to track your progress.
+                  </p>
+                )}
+              </div>
+
+              <h2 className="text-xl font-bold text-[#3B2F2F] mb-4">Leaderboard</h2>
+              {scores.length > 0 ? (
+                <ul className="space-y-2">
+                  {scores.map((entry) => (
+                    <li
+                      key={entry.userId}
+                      className="flex justify-between items-center px-4 py-2 bg-[#FAF3E9] border border-[#E4D5C2] rounded-lg text-[#3B2F2F] text-sm shadow-sm"
+                    >
+                      <span className="font-semibold truncate">{entry.userName.split(" ")[0]}</span>
+                      <span className="font-mono">{entry.score} pts</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-[#3B2F2F] text-sm">
+                  No scores yet. Complete a pomodoro session to earn points!
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </main>
@@ -311,7 +363,7 @@ function PomodoroContent() {
 export default function Pomodoro() {
   return (
     <ProtectedRoute>
-      <Suspense fallback={<div className="min-h-screen bg-cream flex items-center justify-center"><p>Loading...</p></div>}>
+      <Suspense fallback={<div className="min-h-screen bg-[#FAF3E9] flex items-center justify-center"><p>Loading...</p></div>}>
         <PomodoroContent />
       </Suspense>
     </ProtectedRoute>

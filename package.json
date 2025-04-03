@@ -24,6 +24,9 @@
   },
   "homepage": "https://github.com/CMPT-276-SPRING-2025/final-project-07-hills#readme",
   "dependencies": {
+    "@react-oauth/google": "^0.12.1",
+    "firebase": "^11.6.0",
+    "googleapis": "^148.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
@@ -33,4 +36,3 @@
     "react-scripts": "^5.0.1"
   }
 }
-
