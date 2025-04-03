@@ -3,6 +3,9 @@ import { getGoogleAccessToken } from './googleAuthService';
 import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { GroupData } from './groupService';
+import { deleteObject, ref } from "firebase/storage";
+import { storage } from "@/lib/firebase"; // only if using Firebase Storage
+import { google } from "googleapis";
 
 const GROUPS_COLLECTION = 'groups';
 
@@ -10,7 +13,7 @@ interface DocumentData {
   id: string;
   name: string;
   url: string;
-  createdBy: string;
+  createdBy: string
   createdAt: string;
   type: string;
 }
@@ -289,5 +292,62 @@ const addResourceToGroup = async (
   } catch (error) {
     console.error(`Error adding ${resourceType} to group:`, error);
     throw error;
+  }
+};
+
+export const deleteGroupFile = async (groupId: string, fileId: string) => {
+  const groupRef = doc(db, "groups", groupId);
+  const groupSnap = await getDoc(groupRef);
+
+  if (!groupSnap.exists()) throw new Error("Group not found");
+
+  const groupData = groupSnap.data();
+  const file = groupData.resources?.files?.find((f: any) => f.id === fileId);
+  const updatedFiles = (groupData.resources?.files || []).filter((f: any) => f.id !== fileId);
+
+  await updateDoc(groupRef, {
+    "resources.files": updatedFiles
+  });
+
+  if (file?.id) {
+    try {
+      await fetch('/api/delete-drive-file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileId: file.id,
+          accessToken: getGoogleAccessToken()
+        })
+      });
+    } catch (error) {
+      console.warn("Google Drive file deletion failed:", error);
+    }
+  }
+};
+
+export const deleteGroupDocument = async (groupId: string, docId: string) => {
+  const groupRef = doc(db, "groups", groupId);
+  const groupSnap = await getDoc(groupRef);
+
+  if (!groupSnap.exists()) throw new Error("Group not found");
+
+  const groupData = groupSnap.data();
+  const updatedDocs = (groupData.resources?.documents || []).filter((doc: any) => doc.id !== docId);
+
+  await updateDoc(groupRef, {
+    "resources.documents": updatedDocs
+  });
+
+  try {
+    await fetch('/api/delete-drive-file', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileId: docId,
+        accessToken: getGoogleAccessToken()
+      })
+    });
+  } catch (error) {
+    console.warn("Google Drive document deletion failed:", error);
   }
 };

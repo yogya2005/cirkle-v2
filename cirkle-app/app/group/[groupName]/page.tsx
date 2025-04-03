@@ -8,18 +8,18 @@ import { Button } from "@/components/ui/button";
 import { HomeIcon, TimerIcon, PlusIcon, ClipboardIcon, CheckIcon, UploadIcon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { getGroupById, getGroupInviteCode } from "@/services/groupService";
-import { createGroupDocument, uploadGroupFile } from "@/services/googleDriveService";
-import { requestGooglePermissions, hasValidGoogleToken, saveGoogleTokenData } from "@/services/googleAuthService";
+import { createGroupDocument, uploadGroupFile, deleteGroupFile, deleteGroupDocument } from "@/services/googleDriveService";
+import { requestGooglePermissions, hasValidGoogleToken, saveGoogleTokenData, getGoogleAccessToken } from "@/services/googleAuthService";
 import { getUserGroups } from '@/services/groupService';
 import ProtectedRoute from "@/components/protected-route";
 import { getUserById } from '@/services/userService';
 import { Tooltip } from '@/components/ui/tooltip';
+import { XIcon } from "lucide-react";
 
 export default function GroupPage() {
   const params = useParams();
   const groupName = params.groupName as string;
   const router = useRouter();
-  
   const [copied, setCopied] = useState(false);
   const [showCreateDocument, setShowCreateDocument] = useState(false);
   const [documentName, setDocumentName] = useState("");
@@ -30,6 +30,11 @@ export default function GroupPage() {
   const [isCreatingDoc, setIsCreatingDoc] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const [memberData, setMemberData] = useState<{[key: string]: any}>({});
+  const [confirmDelete, setConfirmDelete] = useState<{
+    type: 'document' | 'file';
+    id: string;
+  } | null>(null);
+  
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
@@ -191,24 +196,79 @@ export default function GroupPage() {
     }
   };
 
+  const performDeleteResource = async (type: 'document' | 'file', resourceId: string) => {
+    if (!group || !user) return;
+  
+    try {
+      setError(null);
+      setSuccessMessage("Deleting...");
+  
+      const hasPermissions = await ensureGooglePermissions();
+      if (!hasPermissions) return;
+  
+      let accessToken = getGoogleAccessToken();
+      if (!accessToken) {
+        const hasPermissions = await ensureGooglePermissions();
+        if (!hasPermissions) return;
+
+        accessToken = getGoogleAccessToken(); // retry after permission
+        if (!accessToken) throw new Error("Access token still missing after requesting permissions");
+      }
+
+  
+      const response = await fetch("/api/delete-drive-file", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileId: resourceId, accessToken }),
+      });
+  
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(`Google Drive deletion failed: ${error.error}`);
+      }
+  
+      // Firestore update
+      if (type === "document") {
+        await deleteGroupDocument(group.id, resourceId);
+      } else {
+        await deleteGroupFile(group.id, resourceId);
+      }
+  
+      const refreshedGroup = await getGroupById(group.id);
+      setGroup(refreshedGroup);
+      setSuccessMessage(`${type === "document" ? "Document" : "File"} deleted successfully!`);
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      console.error(`Failed to delete ${type}:`, err);
+      setError(`Failed to delete ${type}. ${err.message || "Please try again."}`);
+    } finally {
+      setConfirmDelete(null); // Close modal
+    }
+  };
+  
+  
+  
+
   // Request Google permissions if needed
   const ensureGooglePermissions = async (): Promise<boolean> => {
     if (!hasValidGoogleToken()) {
       try {
-        setSuccessMessage('Requesting Google Drive permissions...');
         const tokenData = await requestGooglePermissions();
-        saveGoogleTokenData(tokenData);
-        setSuccessMessage('Permissions granted successfully!');
+        if (!tokenData) {
+          setError("You must grant Google Drive access to delete or upload files.");
+          return false;
+        }
+        saveGoogleTokenData(tokenData); // if needed
         return true;
-      } catch (error) {
-        console.error('Failed to get Google permissions:', error);
-        setError('Please grant permission to access Google Drive to create documents and upload files.');
-        setSuccessMessage(null);
+      } catch (err) {
+        console.error("Google auth error:", err);
+        setError("Google Drive authentication failed. Please try again.");
         return false;
       }
     }
     return true;
   };
+  
 
   // Helper function to format date safely
   const formatDate = (timestamp: any): string => {
@@ -372,20 +432,31 @@ export default function GroupPage() {
           <div className="flex gap-6 mt-4 flex-wrap">
             {/* Display existing documents */}
             {group?.resources?.documents?.map((doc: any) => (
-              <a 
-                key={doc.id}
-                href={doc.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-[200px] h-[100px]"
-              >
-                <Button className="w-full h-full flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
-                  <span className="text-lg font-semibold truncate text-ellipsis overflow-hidden whitespace-nowrap w-full text-center px-2">
-                    {doc.name}
-                  </span>
-                </Button>
-              </a>
-            ))}
+          <div 
+            key={doc.id}
+            className="relative w-[200px] h-[100px]"
+          >
+            <a 
+              href={doc.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full h-full"
+            >
+              <Button className="w-full h-full flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
+                <span className="text-lg font-semibold truncate text-ellipsis overflow-hidden whitespace-nowrap w-full text-center px-2">
+                  {doc.name}
+                </span>
+              </Button>
+            </a>
+            <button
+             onClick={() => setConfirmDelete({ type: 'document', id: doc.id })}
+
+              className="absolute top-1 right-1 w-5 h-5 text-sm text-black flex items-center justify-center  hover:text-red-600"
+              title="Delete document">
+              <XIcon className="w-5 h-5" />
+            </button>
+          </div>
+        ))}
             
             <Button 
               className="w-[200px] h-[100px] flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md"
@@ -400,22 +471,36 @@ export default function GroupPage() {
         <h2 className="text-3xl font-bold text-[#B78D75] mt-10">File Uploads</h2>
         <div className="flex gap-6 mt-4 flex-wrap">
           {/* Display existing files */}
-          {group?.resources?.files?.map((file: any) => (
-            <a 
-              key={file.id}
-              href={file.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-[200px] h-[100px]"
-            >
-              <Button className="w-full h-full flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
-                <span className="text-lg font-semibold truncate text-ellipsis overflow-hidden whitespace-nowrap w-full text-center px-2">
-                  {file.name}
-             </span>
-          </Button>
+          
 
-            </a>
-          ))}
+          {group?.resources?.files?.map((file: any) => (
+        <div 
+          key={file.id}
+          className="relative w-[200px] h-[100px]"
+        >
+          <a 
+            href={file.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full h-full"
+          >
+            <Button className="w-full h-full flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
+              <span className="text-lg font-semibold truncate text-ellipsis overflow-hidden whitespace-nowrap w-full text-center px-2">
+                {file.name}
+              </span>
+            </Button>
+          </a>
+          <button
+            onClick={() => setConfirmDelete({ type: 'file', id: file.id })}
+            className="absolute top-1 right-1 w-5 h-5 text-sm text-black flex items-center justify-center  hover:text-red-600"
+            title="Delete file">
+           <XIcon className="w-5 h-5" />
+        
+            
+          </button>
+        </div>
+      ))}
+
           
           <label className="w-[200px] h-[100px] cursor-pointer">
             <input
@@ -438,6 +523,35 @@ export default function GroupPage() {
           </label>
         </div>
       </div>
+      {confirmDelete && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center">
+      <h3 className="text-lg font-semibold mb-4">
+        Confirm Deletion
+      </h3>
+      <p className="mb-6">
+        Are you sure you want to delete this {confirmDelete.type}?
+        This action will delete the resource permanently for everyone in the
+        group and cannot be undone.
+      </p>
+      <div className="flex justify-center space-x-4">
+        <Button 
+          className="bg-red-600 text-white hover:bg-red-700"
+          onClick={() => performDeleteResource(confirmDelete.type, confirmDelete.id)}
+        >
+          Delete
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={() => setConfirmDelete(null)}
+        >
+          Cancel
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
+
     </main>
     </ProtectedRoute>
   );
