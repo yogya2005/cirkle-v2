@@ -20,7 +20,6 @@ export default function GroupPage() {
   const params = useParams();
   const groupName = params.groupName as string;
   const router = useRouter();
-  
   const [copied, setCopied] = useState(false);
   const [showCreateDocument, setShowCreateDocument] = useState(false);
   const [documentName, setDocumentName] = useState("");
@@ -31,6 +30,11 @@ export default function GroupPage() {
   const [isCreatingDoc, setIsCreatingDoc] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const [memberData, setMemberData] = useState<{[key: string]: any}>({});
+  const [confirmDelete, setConfirmDelete] = useState<{
+    type: 'document' | 'file';
+    id: string;
+  } | null>(null);
+  
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
@@ -192,7 +196,7 @@ export default function GroupPage() {
     }
   };
 
-  const handleDeleteResource = async (type: 'document' | 'file', resourceId: string) => {
+  const performDeleteResource = async (type: 'document' | 'file', resourceId: string) => {
     if (!group || !user) return;
   
     try {
@@ -202,8 +206,15 @@ export default function GroupPage() {
       const hasPermissions = await ensureGooglePermissions();
       if (!hasPermissions) return;
   
-      const accessToken = getGoogleAccessToken();
-      if (!accessToken) throw new Error("Access token missing");
+      let accessToken = getGoogleAccessToken();
+      if (!accessToken) {
+        const hasPermissions = await ensureGooglePermissions();
+        if (!hasPermissions) return;
+
+        accessToken = getGoogleAccessToken(); // retry after permission
+        if (!accessToken) throw new Error("Access token still missing after requesting permissions");
+      }
+
   
       const response = await fetch("/api/delete-drive-file", {
         method: "POST",
@@ -230,8 +241,11 @@ export default function GroupPage() {
     } catch (err: any) {
       console.error(`Failed to delete ${type}:`, err);
       setError(`Failed to delete ${type}. ${err.message || "Please try again."}`);
+    } finally {
+      setConfirmDelete(null); // Close modal
     }
   };
+  
   
   
 
@@ -435,7 +449,8 @@ export default function GroupPage() {
               </Button>
             </a>
             <button
-              onClick={() => handleDeleteResource('document', doc.id)}
+             onClick={() => setConfirmDelete({ type: 'document', id: doc.id })}
+
               className="absolute top-1 right-1 w-5 h-5 text-sm text-black flex items-center justify-center  hover:text-red-600"
               title="Delete document">
               <XIcon className="w-5 h-5" />
@@ -476,7 +491,7 @@ export default function GroupPage() {
             </Button>
           </a>
           <button
-            onClick={() => handleDeleteResource('file', file.id)}
+            onClick={() => setConfirmDelete({ type: 'file', id: file.id })}
             className="absolute top-1 right-1 w-5 h-5 text-sm text-black flex items-center justify-center  hover:text-red-600"
             title="Delete file">
            <XIcon className="w-5 h-5" />
@@ -508,6 +523,35 @@ export default function GroupPage() {
           </label>
         </div>
       </div>
+      {confirmDelete && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center">
+      <h3 className="text-lg font-semibold mb-4">
+        Confirm Deletion
+      </h3>
+      <p className="mb-6">
+        Are you sure you want to delete this {confirmDelete.type}?
+        This action will delete the resource permanently for everyone in the
+        group and cannot be undone.
+      </p>
+      <div className="flex justify-center space-x-4">
+        <Button 
+          className="bg-red-600 text-white hover:bg-red-700"
+          onClick={() => performDeleteResource(confirmDelete.type, confirmDelete.id)}
+        >
+          Delete
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={() => setConfirmDelete(null)}
+        >
+          Cancel
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
+
     </main>
     </ProtectedRoute>
   );
