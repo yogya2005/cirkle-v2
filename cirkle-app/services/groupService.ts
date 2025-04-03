@@ -223,3 +223,45 @@ import {
     // In a production app, you might want to generate a separate code
     return groupId;
   };
+
+  // Update the name of a document or file in a group's resources
+export const updateGroupResourceName = async (
+  groupId: string,
+  resourceId: string,
+  resourceType: "documents" | "files",
+  newName: string
+): Promise<void> => {
+  try {
+    console.log(`Updating ${resourceType} name in group ${groupId} for resource ${resourceId}`);
+
+    const groupRef = doc(db, GROUPS_COLLECTION, groupId);
+    const groupSnap = await getDoc(groupRef);
+
+    if (!groupSnap.exists()) {
+      throw new Error(`Group with ID ${groupId} not found`);
+    }
+
+    const groupData = groupSnap.data();
+
+    if (!groupData.resources || !groupData.resources[resourceType]) {
+      throw new Error(`Group does not have any resources of type ${resourceType}`);
+    }
+
+    const updatedResources = groupData.resources[resourceType].map((res: any) => {
+      if (res.id === resourceId) {
+        return { ...res, name: newName };
+      }
+      return res;
+    });
+
+    await updateDoc(groupRef, {
+      [`resources.${resourceType}`]: updatedResources,
+      updatedAt: serverTimestamp(),
+    });
+
+    console.log(`Successfully updated ${resourceType} resource name to "${newName}"`);
+  } catch (error) {
+    console.error(`Error updating resource name in group ${groupId}:`, error);
+    throw error;
+  }
+};

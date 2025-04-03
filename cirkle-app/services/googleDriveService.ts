@@ -351,3 +351,17 @@ export const deleteGroupDocument = async (groupId: string, docId: string) => {
     console.warn("Google Drive document deletion failed:", error);
   }
 };
+
+export async function fetchDriveFileMetadata(fileId: string, accessToken: string) {
+  const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch file metadata: ${response.statusText}`);
+  }
+
+  return await response.json(); // contains `id` and `name`
+}
