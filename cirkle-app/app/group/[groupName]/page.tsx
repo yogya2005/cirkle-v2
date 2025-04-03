@@ -15,6 +15,8 @@ import ProtectedRoute from "@/components/protected-route";
 import { getUserById } from '@/services/userService';
 import { Tooltip } from '@/components/ui/tooltip';
 import { XIcon } from "lucide-react";
+import { syncResourceNames } from "@/services/resourceSyncService";
+
 
 export default function GroupPage() {
   const params = useParams();
@@ -67,6 +69,19 @@ export default function GroupPage() {
     }
   }, [group]);
 
+  useEffect(() => {
+    const syncNames = async () => {
+      if (group && user) {
+        await syncResourceNames(group, user.uid);
+        const refreshed = await getGroupById(group.id);
+        setGroup(refreshed);
+      }
+    };
+  
+    syncNames();
+  }, [group?.id, user]);
+  
+
   // Fetch group data when component mounts
   useEffect(() => {
     const fetchGroupData = async () => {
@@ -107,6 +122,8 @@ export default function GroupPage() {
       setTimeout(() => setCopied(false), 2000);
     });
   };
+
+  
 
   // Handle document creation
   const handleCreateDocument = async () => {
